@@ -146,7 +146,7 @@ CLR = CCR
 """
     
 class Ebtc:
-    def __init__(self, logger):
+    def __init__(self, logger, pool):
         self.MAX_LTV = 15000  ## 150%
         self.FEE_PER_SECOND = 0  ## No fee for borrows
         self.ORIGINATION_FEE = 50  ## 50BPS
@@ -156,6 +156,8 @@ class Ebtc:
         self.price = INITIAL_FEED
         self.time = SECONDS_SINCE_DEPLOY
         self.turn = 0
+
+        self.pool = pool
         
         self.logger = logger
 
@@ -184,6 +186,8 @@ class Ebtc:
       ## TODO: Consider adding % Change function vs hardcoded setter
       self.price = value
 
+      ## TODO: arb the pool?
+
     
     def take_turn(self, users, troves):
         print("Turn", self.turn, ": Second: ", self.time)
@@ -207,13 +211,16 @@ class Ebtc:
     def sort_users(self, users):
         def get_key(user):
             ## TODO: Swing size (+- to impact randomness, simulate sorting, front-running etc..)
-            return user.speed * random.random()
+            ## Technically should sort by type as to allow some variance but not too much
+            ## Alternatively could use PRNG where 99 gives 99% to win but still 1% chance to lose
+            ## TODO: look into PRNG
+            return user.speed
         users.sort(key=get_key)
     
     def take_actions(self, users, troves):
         ## TODO: Add User Decisions making / given the list of all trove have user do something
         for user in users:
-            user.take_action(self.turn, troves)
+            user.take_action(self.turn, troves, self.pool)
 
     def next_turn(self):
       self.time += SECONDS_PER_TURN
@@ -224,7 +231,7 @@ class Ebtc:
 
 class Trove:
     def __init__(self, owner, system):
-        self.deposits = 0
+        self.collateral = 0
         self.debt = 0
         self.last_update_ts = system.time
         self.owner = owner
@@ -235,30 +242,30 @@ class Trove:
         return str(self.__dict__)
 
     def local_collateral_ratio(self):
-        return self.debt * MAX_BPS / self.deposits
+        return self.debt * MAX_BPS / self.collateral
 
     def deposit(self, amount):
         ## Internal
         assert self.is_solvent()
         self.system.total_deposits += amount
-        self.deposits += amount
+        self.collateral += amount
 
         ## Caller
         self.owner.spend(self.id, False, amount, "Deposit")
 
         ## Logging
-        self.system.logger.add_move(self.system.time, "Trove" + self.id, "Deposit", amount)
+        self.system.logger.add_entry([self.system.time, "Trove" + self.id, "Deposit", amount])
 
     def withdraw(self, amount):
         ## Internal
-        self.deposits -= amount
+        self.collateral -= amount
         assert self.is_solvent()
         
         ## Caller
         self.owner.receive(self.id, False, amount, "Withdraw")
 
         ## Logging
-        self.system.logger.add_move(self.system.time, "Trove" + self.id, "Withdraw", amount)
+        self.system.logger.add_entry([self.system.time, "Trove" + self.id, "Withdraw", amount])
 
     def borrow(self, amount):
         self.debt += amount
@@ -269,7 +276,7 @@ class Trove:
         self.owner.receive(self.id, True, amount, "Borrow")
 
         ## Logging
-        self.system.logger.add_move(self.system.time, "Trove" + self.id, "Borrow", amount)
+        self.system.logger.add_entry([self.system.time, "Trove" + self.id, "Borrow", amount])
 
 
     def repay(self, amount):
@@ -281,7 +288,7 @@ class Trove:
         self.owner.spend(self.id, True, amount, "Repay")
 
         ## Logging
-        self.system.logger.add_move(self.system.time, "Trove" + self.id, "Repay", amount)
+        self.system.logger.add_entry([self.system.time, "Trove" + self.id, "Repay", amount])
 
     def liquidate(self, amount, caller):
         ## Only if not owner
@@ -295,7 +302,7 @@ class Trove:
         caller.receive(self.id, False, amount, "Liquidate")
 
         ## Logging
-        self.system.logger.add_move(self.system.time, "Trove", "Liquidate", amount)
+        self.system.logger.add_entry([self.system.time, "Trove", "Liquidate", amount])
 
         return 0
 
@@ -304,7 +311,7 @@ class Trove:
         return True
 
     def max_borrow(self):
-        return self.deposits * self.system.feed * MAX_LTV / MAX_BPS
+        return self.collateral * self.system.get_price() * MAX_LTV / MAX_BPS
 
     def is_solvent(self):
         if self.debt == 0:
@@ -313,10 +320,10 @@ class Trove:
         return self.debt < self.max_borrow()
     
     def current_ltv(self):
-        if self.deposits == 0 or self.system.feed == 0:
+        if self.collateral == 0 or self.system.get_price() == 0:
             return 0
         
-        return self.debt / (self.deposits * self.system.feed)
+        return self.debt / (self.collateral * self.system.get_price())
 
 
 class User:
@@ -335,14 +342,14 @@ class User:
             self.debt -= amount
 
             ## Logging
-            self.system.logger.add_move(self.system.time, "User" + self.name, "Spent Debt", amount)
+            self.system.logger.add_entry([self.system.time, "User" + self.name, "Spent Debt", amount])
 
         
         else:
             self.collateral -= amount
 
             ## Logging
-            self.system.logger.add_move(self.system.time, "User" + self.name, "Spent Collateral", amount)
+            self.system.logger.add_entry([self.system.time, "User" + self.name, "Spent Collateral", amount])
         
 
     
@@ -351,14 +358,14 @@ class User:
             self.debt += amount
 
             ## Logging
-            self.system.logger.add_move(self.system.time, "User" + self.name, "Receive Debt", amount)
+            self.system.logger.add_entry([self.system.time, "User" + self.name, "Receive Debt", amount])
 
         
         else:
             self.collateral += amount
 
             ## Logging
-            self.system.logger.add_move(self.system.time, "User" + self.name, "Receive Collateral", amount)
+            self.system.logger.add_entry([self.system.time, "User" + self.name, "Receive Collateral", amount])
 
 
     def get_debt(self):
@@ -367,12 +374,12 @@ class User:
     def get_balance(self):
         return self.collateral
 
-    def take_action(self, turn, troves):
+    def take_action(self, turn, troves, pool):
         print("User" , self.name, " Taking Action")
         print("turn ", turn)
 
-        self.system.logger.add_move(self.system.time, "User" + self.name, "Balance of Collateral", self.collateral)
-        self.system.logger.add_move(self.system.time, "User" + self.name, "Balance of Debt", self.debt)
+        self.system.logger.add_entry([self.system.time, "User" + self.name, "Balance of Collateral", self.collateral])
+        self.system.logger.add_entry([self.system.time, "User" + self.name, "Balance of Debt", self.debt])
 
 
 ## POOL For Swap
@@ -381,11 +388,11 @@ class User:
 ## Or alternatively just use infinite leverage at price point + .50% price impact
 
 class UniV2Pool():
-  def __init__(self, start_x, start_y, start_lp):
+  def __init__(self, start_x, start_y, start_lp, fee):
     ## NOTE: May or may not want to have a function to hardcode this
     self.reserve_x = start_x
     self.reserve_y = start_y
-    self.total_supply = start_lp
+    self.fee = fee
 
   def k(self):
     return self.x * self.y
@@ -396,6 +403,17 @@ class UniV2Pool():
     else:
       return self.get_price(amount, self.reserve_y, self.reserve_x)
 
+  def recharge(self, percent):
+    self.reserve_x += self.reserve_x * percent / 100
+    self.reserve_y += self.reserve_y * percent / 100
+  
+  def set_price(self, reserve_x, reserve_y):
+    """
+        TODO: Prob should change to move the reserves?
+    """
+    self.reserve_x = reserve_x
+    self.reserve_y = reserve_y
+
   ## UniV2 Formula, can extend the class and change this to create new pools
   def get_price(amount_in, reserve_in, reserve_out):
       amountInWithFee = amount_in * 997
@@ -405,32 +423,23 @@ class UniV2Pool():
 
       return amountOut
   
-  def withdraw_lp():
-    ## TODO
-    return False
   
-  def lp():
-    ## TODO
-    return False
-  
-
-## TODO: Add Roles ##
-"""
-    Doc about ways to play
-    https://docs.google.com/document/d/1MgqFWCPL1d1_z-8Cohq-h_9N4VEsF4zAFbxuMYq4YwA/edit
-"""
+      
 
 ## Borrows and Holds
 class Borrower(User):
     def __init__(self, system, initial_balance_collateral):
         self.system = system
+
         self.debt = 0
         self.collateral = initial_balance_collateral
+
         self.name = random.choice(name_list)
         self.speed = math.floor(random.random() * SPEED_RANGE) + 1
+
         self.target_ltv = random.random() * MAX_LTV
     
-    def take_action(self, turn, troves):
+    def take_action(self, turn, troves, pool):
         ## Deposit entire balance
         trove = self.find_trove(troves)
 
@@ -443,22 +452,25 @@ class Borrower(User):
             print("Cannot find trove PROBLEM")
             assert False
         
+        self.deposit_all(trove)
+
+        
+
+    def deposit_all(self, trove):
         ## if has collateral spend it
         if(self.collateral > 0):
             trove.deposit(self.collateral)
             
-            ## NOTE: Check we did use collateral
+            ## Check we did use collateral
             assert self.collateral == 0
-    
         
-        
-        target_borrow = trove.max_borrow() * self.target_ltv / MAX_BPS
+    def borrow_til_target_ltv(self, trove, target_ltv):
+        target_borrow = trove.max_borrow() * target_ltv / MAX_BPS
 
         ## If below target, borrow
         if(trove.debt < target_borrow):
             print("We are below target ltv, borrow")
             ## Borrow until we get to ltv
-            ## TODO: check math math
             delta_borrow = target_borrow - trove.debt
 
             print("Borrow ", delta_borrow)
@@ -466,12 +478,15 @@ class Borrower(User):
         
         ## If above target, delever
         if(trove.debt > target_borrow):
-            ## TODO: Repay
-            return 0
-        
+            delta = trove.debt - target_borrow
+
+            ## Check we can afford to repay
+            if delta < self.debt:
+                trove.repay(delta)
+            else:
+                print("Insolvent, cannot repay the whole debt, wait and pray")
 
         
-    
     def find_trove(self, troves):
         for trove in troves:
             if trove.owner.name == self.name:
@@ -481,21 +496,88 @@ class Borrower(User):
 
 
 ## Borrow and Sells when price is higher
-class LongArbitrager(User):
-    def take_action(self, turn, troves):
-        pass
+class StatArber(Borrower):
 
+
+
+    ## Borrow and Sell
+
+    ## If profit is above target close
+
+    ## If underwater enough, close at loss
+
+    ## Always repay after X time
+
+    ## Patience value
+
+    ## Price Open
+    ## Profit target
+    ## Loss target
+
+    ## Lifetime PNL
+    ## Total Loss
+    ## Total Gain
+
+    
+    def take_action(self, turn, troves, pool):
+
+        trove = self.find_trove(troves)
+
+        if not trove.is_solvent():
+            print("Trove is insolvent, we run away with the money")
+            return ## Just skip
+
+        if(trove == False):
+            print("Cannot find trove PROBLEM")
+            assert False
+
+        ## Has open position?
+        if (self.positon > 0):
+            self.manage_position(trove)
+        else:
+            self.open_position(trove)
+
+    def open_position(self, trove):
+        price = self.get_price()
+
+        ## If above target, open and sell
+        if price > self.target_open_price:
+            self.deposit_all(trove)
+
+            ## Borrow to tollerance
+            self.borrow_til_target_ltv(self, trove, self.target_ltv)
+
+            ## Sell to Pool
+
+            ## Then set state
+        
+    def manage_position(self, trove):
+        print("TODO")
+        
+        
 
 ## Buys when cheap and sells when higher
-class ShortArbitrager(User):
-   def take_action(self, turn, troves):
+class RedeemArber(User):
+   def take_action(self, turn, troves, pool):
         pass
+   
+        ## Check pool, if below redeem, go ahead
+
+        ## If above redeem, skip
 
 
-## Does both arbitrages
-class Trader(User):
-    def take_action(self, turn, troves):
+## Liquidate when profitable ETH -> eBTC -> ETH
+## Never takes any debt, their liquidations are entirely a function of premium and liquidity
+class PureLiquidator(User):
+   def take_action(self, turn, troves, pool):
         pass
+   
+        ## Check amount liquidatable
+
+        ## Check if profitable
+
+        ## Do the liquidation and arb
+
 
 
 def invariant_tests():
@@ -515,8 +597,10 @@ def invariant_tests():
 def main():
 
     # init the system
-    logger = GenericLogger("sim", [])
-    system = Ebtc(logger)
+    logger = GenericLogger("sim", ["Time", "Name", "Action", "Amount"])
+    pool = UniV2Pool(1000, 1000, 1000, 300)
+
+    system = Ebtc(logger, pool)
 
     # init a user with a balance of 100
     user_1 = Borrower(system, 100)

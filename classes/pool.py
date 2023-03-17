@@ -29,7 +29,21 @@ class Pool():
     self.reserve_y = reserve_y
 
   
-  ## TODO: How can we change reserves such that price changes as we want it to?
+  def increase_price_of_debt(self, percent):
+    assert percent < 200
+    assert percent > 100
+
+    ## Debt is y
+    ## To increase it's price, just increase the reserve_x by the percent
+    self.reserve_x = self.reserve_x * percent / 100
+
+  def increase_price_of_coll(self, percent):
+    assert percent < 200
+    assert percent > 100
+    
+    ## Coll is x
+    ## To increase it's price, just increase the reserve_y by the percent
+    self.reserve_y = self.reserve_y * percent / 100
 
   ## UniV2 Formula, can extend the class and change this to create new pools
   def get_price(amount_in, reserve_in, reserve_out):

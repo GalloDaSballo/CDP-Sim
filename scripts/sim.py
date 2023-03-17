@@ -68,13 +68,14 @@ random.seed(SEED)
 
     - Users are the Agents, create a class that extends User (e.g. Borrower)
     
-    - Write the logic in take_action and you will be able to extend the rest of the system
+    - Write the logic in take_action and you will be able to extend the rest of the ebtc
 
 
     TODO:
-    - Basic invariant / unit tests to make sure system is fine
+    - Basic invariant / unit tests to make sure ebtc is fine
     - Extend more Classes to Sim
-    - Decide if we want to add UniV2 / V3 Pool and simulate arbs there as well
+    - Decide if we want to extend UniV2 / V3 Pool and simulate arbs there as well, 
+    TODO: for now recharge the size based on TVL
 """
 
 
@@ -145,27 +146,6 @@ CCR = 150
 ## NOTE: Set to CCR, tweak it if you want
 CLR = CCR
 
-
-
-
-
-"""
-    CLASSES
-"""
-    
-  
-    
-
-
-
-
-
-
-
-
-
-
-
            
 
 
@@ -187,31 +167,32 @@ def invariant_tests():
 
 def main():
 
-    # init the system
+    # init the ebtc
     logger = GenericLogger("sim", ["Time", "Name", "Action", "Amount"])
     pool = Pool(1000, 1000, 1000, 300)
 
-    system = Ebtc(logger, pool)
+    ebtc = Ebtc(logger, pool)
 
     # init a user with a balance of 100
-    user_1 = Borrower(system, 100)
-    user_2 = StatArber(system, 100)
+    user_1 = Borrower(ebtc, 100)
+    user_2 = StatArber(ebtc, 100)
 
     # init a trove for this user
-    trove_1 = Trove(user_1, system)
-    trove_2 = Trove(user_2, system)
+    trove_1 = Trove(user_1, ebtc)
+    trove_2 = Trove(user_2, ebtc)
 
-    assert system.time == 0
+    assert ebtc.time == 0
     
 
     ## Turn System
     users = [user_1, user_2]
     troves = [trove_1, trove_2]
 
-    system.take_turn(users, troves)
-    assert system.time == SECONDS_PER_TURN
 
-    system.take_turn(users, troves)
+    ebtc.take_turn(users, troves)
+    assert ebtc.time == SECONDS_PER_TURN
+
+    ebtc.take_turn(users, troves)
 
     pprint(logger)
 
@@ -222,27 +203,31 @@ def main():
     print("LTVL before drop", trove_2.current_ltv())
 
     ## Minimum amount to be insolvent ## On max leverage
-    system.set_price(system.get_price() * (MAX_BPS - MAX_LTV - 1) / MAX_BPS)
+    ebtc.set_price(ebtc.get_price() * (MAX_BPS - MAX_LTV - 1) / MAX_BPS)
 
 
     print("LTVL after drop", trove_1.current_ltv())
 
     ## Insane drop
-    system.set_price(0.0001)
+    ebtc.set_price(0.0001)
 
     ## User will not invest
-    system.take_turn(users, troves)
+    ebtc.take_turn(users, troves)
 
     print("Debt", trove_1.debt)
     print("Max Debt", trove_1.max_borrow())
     
 
     ## Because one trove let's verify consistency
-    assert system.total_debt == trove_1.debt + trove_2.debt
-    print("system.max_borrow()", system.max_borrow())
+    print("ebtc.total_debt", ebtc.total_debt)
+    print("trove_1.debt", trove_1.debt)
+    print("trove_2.debt", trove_2.debt)
+    assert ebtc.total_debt == trove_1.debt + trove_2.debt
+    
+    print("ebtc.max_borrow()", ebtc.max_borrow())
     print("trove_1.max_borrow()", trove_1.max_borrow())
     print("trove_2.max_borrow()", trove_2.max_borrow())
-    assert system.max_borrow() == trove_1.max_borrow() + trove_2.max_borrow()
+    assert ebtc.max_borrow() == trove_1.max_borrow() + trove_2.max_borrow()
 
     assert not trove_1.is_solvent()
 

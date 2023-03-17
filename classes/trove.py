@@ -69,6 +69,8 @@ class Trove:
             return False
         
         ## TODO: Incorrect / Missing piece / Math
+        ## TODO: Can change this to test different types of premiums
+        
         ## Spend Debt to repay
         caller.spend(self.id, True, amount, "Liquidate")
         ## Receive Collateral for liquidation

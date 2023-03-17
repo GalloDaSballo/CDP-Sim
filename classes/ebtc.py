@@ -72,21 +72,23 @@ class Ebtc:
         
 
     def take_turn(self, users, troves):
+        ## Increase counter
+        self.next_turn()
         print("Turn", self.turn, ": Second: ", self.time)
 
         ## Do w/e
         self.sort_users(users)
 
+        
+        ## Update Price from previous turn
+        self.price = self.next_price
+
         ## Find next price for arbitrageurs to front-run
         self.next_price = self.get_next_price() 
 
+        ## Let users take action
         self.take_actions(users, troves)
 
-        ## NOTE: Logging is done by each actor
-        ## NO LOGS IN SYSTEM, only in Trove / User
-        
-        ## Increase counter
-        self.next_turn()
 
         ## End of turn checks
         if(not self.is_solvent()):
@@ -99,6 +101,7 @@ class Ebtc:
             ## Technically should sort by type as to allow some variance but not too much
             ## Alternatively could use PRNG where 99 gives 99% to win but still 1% chance to lose
             ## TODO: look into PRNG
+            ## Actualy just have a different ADDEND in the speed so that arbers are faster
             return user.speed
         users.sort(key=get_key)
     

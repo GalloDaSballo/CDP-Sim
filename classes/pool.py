@@ -46,7 +46,7 @@ class Pool():
     self.reserve_y = self.reserve_y * percent / 100
 
   ## UniV2 Formula, can extend the class and change this to create new pools
-  def get_price(amount_in, reserve_in, reserve_out):
+  def get_price(self, amount_in, reserve_in, reserve_out):
       amountInWithFee = amount_in * 997
       numerator = amountInWithFee * reserve_out
       denominator = reserve_in * 1000 + amountInWithFee
@@ -56,7 +56,7 @@ class Pool():
   
   def swap(self, caller, is_from_debt, amount_in):
     ## Spend
-    caller.spend(self, is_from_debt, amount_in, "Swap")
+    caller.spend(self, is_from_debt, amount_in, "Swap Spend")
 
     ## Swap
     receive_amount = 0
@@ -68,7 +68,7 @@ class Pool():
       receive_amount = self.swap_for_debt(amount_in)
     
     ## Send back to caller
-    caller.receive(self, not is_from_debt, receive_amount)
+    caller.receive(self, not is_from_debt, receive_amount, "Swap Receive")
 
   
   def swap_for_coll(self, debt_in):

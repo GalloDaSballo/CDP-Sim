@@ -6,8 +6,8 @@
 class Pool():
   def __init__(self, start_x, start_y, start_lp, fee):
     ## NOTE: May or may not want to have a function to hardcode this
-    self.reserve_x = start_x
-    self.reserve_y = start_y
+    self.reserve_x = start_x ## Coll
+    self.reserve_y = start_y ## Debt
     self.fee = fee
 
   def k(self):
@@ -24,11 +24,12 @@ class Pool():
     self.reserve_y += self.reserve_y * percent / 100
   
   def set_price(self, reserve_x, reserve_y):
-    """
-        TODO: Prob should change to move the reserves?
-    """
+    ## TODO: Prob should change to move the reserves?
     self.reserve_x = reserve_x
     self.reserve_y = reserve_y
+
+  
+  ## TODO: How can we change reserves such that price changes as we want it to?
 
   ## UniV2 Formula, can extend the class and change this to create new pools
   def get_price(amount_in, reserve_in, reserve_out):
@@ -38,3 +39,38 @@ class Pool():
       amountOut = numerator / denominator
 
       return amountOut
+  
+  def swap(self, caller, is_from_debt, amount_in):
+    ## Spend
+    caller.spend(self, is_from_debt, amount_in, "Swap")
+
+    ## Swap
+    receive_amount = 0
+    if is_from_debt:
+      ## If is_from_debt we are buying coll
+      receive_amount = self.swap_for_coll(amount_in)
+    else:
+      ## Else we are spending coll fro debt
+      receive_amount = self.swap_for_debt(amount_in)
+    
+    ## Send back to caller
+    caller.receive(self, not is_from_debt, receive_amount)
+
+  
+  def swap_for_coll(self, debt_in):
+    amount_out = self.get_price(debt_in, self.reserve_y, self.reserve_x)
+
+    self.reserve_y += debt_in
+    self.reserve_x -= amount_out
+
+    return amount_out
+
+
+  def swap_for_debt(self, coll_in):
+    amount_out = self.get_price(coll_in, self.reserve_x, self.reserve_y)
+
+    self.reserve_x += coll_in
+    self.reserve_y -= amount_out
+
+    return amount_out
+

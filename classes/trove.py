@@ -1,6 +1,8 @@
 import random
+
 MAX_BPS = 10_000
-MAX_LTV = 85_00
+MAX_LTV = 8_500
+
 
 class Trove:
     def __init__(self, owner, system):
@@ -9,7 +11,9 @@ class Trove:
         self.last_update_ts = system.time
         self.owner = owner
         self.system = system
-        self.id = str(random.randint(1, 10**24)) ## Although PRGN odds of clash are unlikely
+        self.id = str(
+            random.randint(1, 10**24)
+        )  ## Although PRGN odds of clash are unlikely
 
     def __repr__(self):
         return str(self.__dict__)
@@ -18,59 +22,80 @@ class Trove:
         return self.debt * MAX_BPS / self.collateral
 
     def deposit(self, amount):
+        ## System Wide
+        self.system.total_deposits += amount
+
         ## Internal
         assert self.is_solvent()
-        self.system.total_deposits += amount
         self.collateral += amount
 
         ## Caller
         self.owner.spend(self.id, False, amount, "Deposit")
 
         ## Logging
-        self.system.logger.add_entry([self.system.time, "Trove" + self.id, "Deposit", amount])
+        self.system.logger.add_entry(
+            [self.system.time, "Trove" + self.id, "Deposit", amount]
+        )
 
     def withdraw(self, amount):
+        ## System Wide
+        self.system.total_deposits -= amount
+
         ## Internal
         self.collateral -= amount
         assert self.is_solvent()
-        
+
         ## Caller
         self.owner.receive(self.id, False, amount, "Withdraw")
 
         ## Logging
-        self.system.logger.add_entry([self.system.time, "Trove" + self.id, "Withdraw", amount])
+        self.system.logger.add_entry(
+            [self.system.time, "Trove" + self.id, "Withdraw", amount]
+        )
 
     def borrow(self, amount):
+        ## Internal
         self.debt += amount
         assert self.is_solvent()
+
+        ## System Wide
         self.system.total_debt += amount
         assert self.system.is_solvent()
 
         self.owner.receive(self.id, True, amount, "Borrow")
 
         ## Logging
-        self.system.logger.add_entry([self.system.time, "Trove" + self.id, "Borrow", amount])
-
+        self.system.logger.add_entry(
+            [self.system.time, "Trove" + self.id, "Borrow", amount]
+        )
 
     def repay(self, amount):
+        ## Internal
         self.debt -= amount
         assert self.is_solvent()
+
+        ## System Wide
         self.system.total_debt -= amount
         assert self.system.is_solvent()
 
         self.owner.spend(self.id, True, amount, "Repay")
 
         ## Logging
-        self.system.logger.add_entry([self.system.time, "Trove" + self.id, "Repay", amount])
+        self.system.logger.add_entry(
+            [self.system.time, "Trove" + self.id, "Repay", amount]
+        )
 
     def liquidate(self, amount, caller):
         ## Only if not owner
         if caller == self.owner:
             return False
-        
+
+        assert self.is_underwater()
+
         ## TODO: Incorrect / Missing piece / Math
         ## TODO: Can change this to test different types of premiums
-        
+        self.debt -= amount
+
         ## Spend Debt to repay
         caller.spend(self.id, True, amount, "Liquidate")
         ## Receive Collateral for liquidation
@@ -98,16 +123,14 @@ class Trove:
     def is_underwater(self):
         if self.debt == 0:
             return False
-        
+
         return self.debt > self.collateral * self.system.get_price()
 
-    def get_cr(self):
-        return get_icr(self.collateral, self.debt, self.system.get_price())
+    def get_icr(self):
+        return (self.collateral * self.system.get_price()) / self.debt * 100
 
-    
-    
     def current_ltv(self):
         if self.collateral == 0 or self.system.get_price() == 0:
             return 0
-        
+
         return self.debt / (self.collateral * self.system.get_price())

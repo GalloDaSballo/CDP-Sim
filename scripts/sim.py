@@ -34,6 +34,8 @@ import random
 from rich.pretty import pprint
 from lib.logger import GenericLogger, GenericEntry
 
+from lib.helpers import get_cg_price
+
 from classes.pool import Pool
 from classes.ebtc import Ebtc
 from classes.trove import Trove
@@ -43,7 +45,7 @@ from classes.users.stat_arber import StatArber
 
 MAX_BPS = 10_000
 SECONDS_SINCE_DEPLOY = 0
-SECONDS_PER_TURN = 12 ## One block in POS
+SECONDS_PER_TURN = 12  ## One block in POS
 INITIAL_FEED = 1000
 SPEED_RANGE = 10
 
@@ -85,42 +87,47 @@ random.seed(SEED)
 
 ## CR
 
+
 def get_icr(coll, debt, price):
-  """
+    """
     Assume price is denominated in debt
     e.g. coll / price = debt value
-  """
-  return coll / debt / price * 100
+    """
+    return coll / debt / price * 100
 
 
 ## AMM V2
 
+
 def price_given_in(amount_in, reserve_in, reserve_out):
-  """
+    """
     Returns price given the amount in and the reserves
-  """
-  out = amount_out_given_in(amount_in, reserve_in, reserve_out)
-  return amount_in / out
+    """
+    out = amount_out_given_in(amount_in, reserve_in, reserve_out)
+    return amount_in / out
+
 
 def amount_out_given_in(amount_in, reserve_in, reserve_out):
-  """
+    """
     Returns the amount out given the amount in and the reserves
-  """
-  amount_out = reserve_out * amount_in / (reserve_in + amount_in)
-  return amount_out
+    """
+    amount_out = reserve_out * amount_in / (reserve_in + amount_in)
+    return amount_out
+
 
 def amount_in_give_out(amount_out, reserve_in, reserve_out):
-  """
+    """
     Returns how much you need to send in order to receive amount out given the reserves
-  """
-  amount_in = reserve_in * amount_out / (reserve_out - amount_out)
-  return amount_in
+    """
+    amount_in = reserve_in * amount_out / (reserve_out - amount_out)
+    return amount_in
+
 
 def max_in_before_price_limit(price_limit, reserve_in, reserve_out):
-  """
+    """
     Returns the maximum amount you can buy before reaching the price limit
-  """
-  return reserve_out * price_limit - reserve_in
+    """
+    return reserve_out * price_limit - reserve_in
 
 
 """
@@ -128,16 +135,18 @@ def max_in_before_price_limit(price_limit, reserve_in, reserve_out):
 """
 
 ## BASIC ##
-START_COLL = 1_000_000e18 ## NOTE: No point in randomizing it as all insights are % of this
+START_COLL = (
+    1_000_000e18  ## NOTE: No point in randomizing it as all insights are % of this
+)
 
 PRICE = 13
 
-PRICE_VOLATILITY = 100 ## 1%
+PRICE_VOLATILITY = 100  ## 1%
 
 
 ## RISK VALUES ##
 ## Below this you get liquidated
-MCR = 110 
+MCR = 110
 
 ## If TCR < CCR we enter recovery mode
 CCR = 150
@@ -146,48 +155,49 @@ CCR = 150
 ## NOTE: Set to CCR, tweak it if you want
 CLR = CCR
 
-           
-
-
+STETH_COLL_BALANCE = 100
+RESERVE_COLL_INITIAL_BALANCE = 1000
+POOL_FEE = 300
 
 
 def invariant_tests():
     ## TODO: Please fill these in
     """
-        If I have X troves, then total debt is sum of each trove debt
+    If I have X troves, then total debt is sum of each trove debt
 
-        Total borrowed is sum of each trove
+    Total borrowed is sum of each trove
 
-        Max_borrow is sum of max borrowed
+    Max_borrow is sum of max borrowed
 
-        LTV is weighted average of each LTV = Sum LTV / $%
+    LTV is weighted average of each LTV = Sum LTV / $%
 
-        If I take a turn, X seconds pass
+    If I take a turn, X seconds pass
     """
+
 
 def main():
 
     # init the ebtc
     logger = GenericLogger("sim", ["Time", "Name", "Action", "Amount"])
-    pool = Pool(1000, 1000, 1000, 300)
+    # make initial balances of the pool matching the "oracle" price from the ebtc system
+    reserve_debt_balance = RESERVE_COLL_INITIAL_BALANCE * get_cg_price()
+    pool = Pool(RESERVE_COLL_INITIAL_BALANCE, reserve_debt_balance, 1000, POOL_FEE)
 
     ebtc = Ebtc(logger, pool)
 
-    # init a user with a balance of 100
-    user_1 = Borrower(ebtc, 100)
-    user_2 = StatArber(ebtc, 100)
+    # init a user with a balance of `STETH_COLL_BALANCE`
+    user_1 = Borrower(ebtc, STETH_COLL_BALANCE)
+    user_2 = StatArber(ebtc, STETH_COLL_BALANCE)
 
     # init a trove for this user
     trove_1 = Trove(user_1, ebtc)
     trove_2 = Trove(user_2, ebtc)
 
     assert ebtc.time == 0
-    
 
     ## Turn System
     users = [user_1, user_2]
     troves = [trove_1, trove_2]
-
 
     ebtc.take_turn(users, troves)
     assert ebtc.time == SECONDS_PER_TURN
@@ -199,16 +209,15 @@ def main():
     ## Test for Feed and solvency
     assert trove_1.is_solvent()
 
-    print("LTVL before drop", trove_1.current_ltv())
-    print("LTVL before drop", trove_2.current_ltv())
+    print("LTV before drop", trove_1.current_ltv())
+    print("LTV before drop", trove_2.current_ltv())
 
     ## Minimum amount to be insolvent ## On max leverage
     ebtc.set_price(ebtc.get_price() * (MAX_BPS - MAX_LTV - 1) / MAX_BPS)
 
+    print("LTV after drop", trove_1.current_ltv())
 
-    print("LTVL after drop", trove_1.current_ltv())
-
-    ## Insane drop
+    ## Insane drop in BTC price -> 0.5 stETH/BTC OR insane drop in ETH price ?
     ebtc.set_price(0.0001)
 
     ## User will not invest
@@ -216,14 +225,13 @@ def main():
 
     print("Debt", trove_1.debt)
     print("Max Debt", trove_1.max_borrow())
-    
 
     ## Because one trove let's verify consistency
     print("ebtc.total_debt", ebtc.total_debt)
     print("trove_1.debt", trove_1.debt)
     print("trove_2.debt", trove_2.debt)
     assert ebtc.total_debt == trove_1.debt + trove_2.debt
-    
+
     print("ebtc.max_borrow()", ebtc.max_borrow())
     print("trove_1.max_borrow()", trove_1.max_borrow())
     print("trove_2.max_borrow()", trove_2.max_borrow())

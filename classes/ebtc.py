@@ -1,6 +1,6 @@
 from random import random
 
-from lib.helpers import get_cg_price
+from lib.helpers import get_cg_price, price_after_shock
 
 ## TODO: Centralize settings and inject them in system
 
@@ -8,7 +8,6 @@ SECONDS_SINCE_DEPLOY = 0
 INITIAL_FEED = 13
 MAX_LTV = 8_500
 MAX_BPS = 10_000
-PRICE_VOLATILITY = 100
 SECONDS_PER_TURN = 12  ## One block in POS
 
 
@@ -65,20 +64,7 @@ class Ebtc:
         ## TODO: SET THE POOL
 
     def get_next_price(self):
-        print("Next Price")
-        val = random() * 100 + 1
-        print("****val", val)
-        if val < 50:
-            ## Increase
-            return (
-                self.get_price() * (MAX_BPS + (PRICE_VOLATILITY * random())) / MAX_BPS
-            )
-            ## TODO: We may want to log this
-        else:
-            ## Decrease
-            return (
-                self.get_price() * (MAX_BPS - (PRICE_VOLATILITY * random())) / MAX_BPS
-            )
+        return price_after_shock(self.price)
 
     def take_turn(self, users, troves):
         ## Increase counter

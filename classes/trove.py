@@ -85,24 +85,41 @@ class Trove:
             [self.system.time, "Trove" + self.id, "Repay", amount]
         )
 
-    def liquidate(self, amount, caller):
+    def liquidate_full(self, caller):
+
         ## Only if not owner
         if caller == self.owner:
             return False
 
         assert self.is_underwater()
 
+        # TODO: do we care about this specifics?
+        is_recovery_mode = self.system.is_in_emergency_mode()
+
+        total_debt_burn = self.debt
+        total_col_send = self.collateral
+
+        ## Internal
         ## TODO: Incorrect / Missing piece / Math
         ## TODO: Can change this to test different types of premiums
-        self.debt -= amount
+        self.debt -= total_debt_burn
+
+        ## System Wide
+        self.system.total_debt -= total_debt_burn
+        self.system.total_deposits -= total_col_send
+
+        # External User
+        caller.receive(False, total_col_send)
 
         ## Spend Debt to repay
-        caller.spend(self.id, True, amount, "Liquidate")
+        caller.spend(self.id, True, total_debt_burn, "Liquidate")
         ## Receive Collateral for liquidation
-        caller.receive(self.id, False, amount, "Liquidate")
+        caller.receive(self.id, False, total_col_send, "Liquidate")
 
         ## Logging
-        self.system.logger.add_entry([self.system.time, "Trove", "Liquidate", amount])
+        self.system.logger.add_entry(
+            [self.system.time, "Trove", "Liquidate", total_debt_burn]
+        )
 
         return 0
 

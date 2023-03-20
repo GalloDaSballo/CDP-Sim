@@ -50,18 +50,18 @@ class Ebtc:
         return self.total_debt < self.max_borrow()
 
     def is_underwater(self):
-        ## TODO: Prob refactor
-        return self.total_debt > (self.total_deposits / self.price)
+        return self.total_debt > self.max_borrow()
 
     def get_price(self):
         return self.price
 
     def set_price(self, value):
-        ## TODO: Logging
         ## TODO: Consider adding % Change function vs hardcoded setter
         self.price = value
 
-        ## TODO: SET THE POOL
+        self.logger.add_entry([self.time, "System", "Price Change", value])
+
+        ## TODO: SET THE POOL, MANIPULATE RESERVES ACCORDINGLY
 
     def get_next_price(self):
         return price_after_shock(self.price)

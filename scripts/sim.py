@@ -32,8 +32,9 @@
 import math
 import random
 from rich.pretty import pprint
-from lib.logger import GenericLogger, GenericEntry
+from pytest import approx
 
+from lib.logger import GenericLogger, GenericEntry
 from lib.helpers import get_cg_price
 
 from classes.pool import Pool
@@ -158,6 +159,7 @@ CLR = CCR
 STETH_COLL_BALANCE = 100
 RESERVE_COLL_INITIAL_BALANCE = 1000
 POOL_FEE = 300
+INSANE_RATIO_DROP = 0.0001
 
 
 def invariant_tests():
@@ -218,7 +220,7 @@ def main():
     print("LTV after drop", trove_1.current_ltv())
 
     ## Insane drop in BTC price -> 0.5 stETH/BTC OR insane drop in ETH price ?
-    ebtc.set_price(0.0001)
+    ebtc.set_price(INSANE_RATIO_DROP)
 
     ## User will not invest
     ebtc.take_turn(users, troves)
@@ -229,13 +231,18 @@ def main():
     ## Because one trove let's verify consistency
     print("ebtc.total_debt", ebtc.total_debt)
     print("trove_1.debt", trove_1.debt)
+    print("trove_1.collateral", trove_1.collateral)
     print("trove_2.debt", trove_2.debt)
-    assert ebtc.total_debt == trove_1.debt + trove_2.debt
+    # assert with `approx` minor decimals mismatch
+    assert approx(ebtc.total_debt) == trove_1.debt + trove_2.debt
 
     print("ebtc.max_borrow()", ebtc.max_borrow())
     print("trove_1.max_borrow()", trove_1.max_borrow())
     print("trove_2.max_borrow()", trove_2.max_borrow())
     assert ebtc.max_borrow() == trove_1.max_borrow() + trove_2.max_borrow()
+
+    # force another drop again to force trove insolvency, since we `take_turn` and modify the system price
+    ebtc.set_price(INSANE_RATIO_DROP)
 
     assert not trove_1.is_solvent()
 

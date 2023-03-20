@@ -2,7 +2,11 @@ import math
 import random
 from classes.users.user import User
 
-## TODO: Init with faster speet
+"""
+    TODO: Incomplete
+
+    (Add Redeem logic to troves as well)
+"""
 
 ## Buys when cheap and sells when higher
 class RedeemArber(User):

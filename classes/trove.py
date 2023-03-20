@@ -1,4 +1,7 @@
 import random
+from lib.status import get_icr
+
+
 MAX_BPS = 10_000
 MAX_LTV = 85_00
 
@@ -80,6 +83,13 @@ class Trove:
         self.system.logger.add_entry([self.system.time, "Trove", "Liquidate", amount])
 
         return 0
+
+    def redeem(self, amount):
+        ## TODO: Function for price given debt
+        ## Given that return linearly
+        ## TODO: 2 -> require system calling
+        ## TODO: 3 -> Add % Fee
+        x = 0
 
     ## SECURITY CHECKS
     def is_trove(self):

@@ -1,4 +1,5 @@
 from random import random
+from lib.status import get_icr
 
 ## TODO: Centralize settings and inject them in system
 

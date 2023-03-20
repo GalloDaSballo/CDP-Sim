@@ -2,6 +2,12 @@ import math
 import random
 from classes.users.user import User
 
+"""
+    TODO: Incomplete
+
+    (Add liquidation logic to troves as well)
+"""
+
 ## Liquidate when profitable ETH -> eBTC -> ETH
 ## Never takes any debt, their liquidations are entirely a function of premium and liquidity
 class PureLiquidator(User):

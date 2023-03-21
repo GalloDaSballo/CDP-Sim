@@ -157,7 +157,7 @@ class Trove:
         ## Given that return linearly
         ## TODO: 2 -> require system calling
         ## TODO: 3 -> Add % Fee
-        x = 0
+        return coll_compensation - coll_redemp_fee
 
     def redemption_fee(self, coll_amt):
         # https://github.com/liquity/dev/blob/main/packages/contracts/contracts/TroveManager.sol#L47

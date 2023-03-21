@@ -1,4 +1,5 @@
 from random import random
+from lib.status import get_icr
 
 from lib.helpers import get_cg_price, price_after_shock
 

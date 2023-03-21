@@ -123,12 +123,48 @@ class Trove:
 
         return 0
 
-    def redeem(self, amount):
+    def redeem(self, ebtc_amount, caller):
+        # healh check-ups before filling redemptions
+        assert ebtc_amount > 0
+        assert self.system.get_tcr() >= self.system.MCR
+        assert ebtc_amount <= self.system.total_debt()
+        assert caller.debt >= ebtc_amount
+
+        price = self.system.get_price()
+
+        trove_ebtc_redemption = min(ebtc_amount, self.debt)
+        coll_compensation = trove_ebtc_redemption / price
+
+        # Internal
+        self.debt -= trove_ebtc_redemption
+        self.collateral -= coll_compensation
+
+        # System Wide
+        self.system.total_debt -= trove_ebtc_redemption
+        self.system.total_deposits -= coll_compensation
+
+        # Redemption Fee
+        coll_redemp_fee = self.redemption_fee(coll_compensation)
+        self.system.redemp_coll += coll_redemp_fee
+
+        # Caller Updates
+        caller.spend(self.id, True, trove_ebtc_redemption, "Redemption")
+        caller.receive(
+            self.id, False, coll_compensation - coll_redemp_fee, "Redemption"
+        )
+
         ## TODO: Function for price given debt
         ## Given that return linearly
         ## TODO: 2 -> require system calling
         ## TODO: 3 -> Add % Fee
         x = 0
+
+    def redemption_fee(self, coll_amt):
+        # https://github.com/liquity/dev/blob/main/packages/contracts/contracts/TroveManager.sol#L47
+        floor_fee = 0.005
+        redemp_fee = coll_amt * floor_fee
+        assert redemp_fee < coll_amt
+        return redemp_fee
 
     ## SECURITY CHECKS
     def is_trove(self):

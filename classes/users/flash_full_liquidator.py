@@ -16,7 +16,7 @@ from classes.users.user import User
 
 ## Liquidate when profitable ETH -> eBTC -> ETH
 ## Never takes any debt, their liquidations are entirely a function of premium and liquidity
-class FlashLiquidator(User):
+class FlashFullLiquidator(User):
 
     def __init__(self, system):
         User.__init__(self, system, 0)

@@ -17,6 +17,9 @@ class Ebtc:
         self.MAX_LTV = 15000  ## 150%
         self.FEE_PER_SECOND = 0  ## No fee for borrows
         self.ORIGINATION_FEE = 50  ## 50BPS
+        # https://github.com/liquity/dev/blob/main/packages/contracts/contracts/Dependencies/LiquityBase.sol#L22
+        self.MCR = 110
+        # https://github.com/liquity/dev/blob/main/packages/contracts/contracts/Dependencies/LiquityBase.sol#L25
         self.CCR = 150
 
         self.total_deposits = 0
@@ -26,6 +29,9 @@ class Ebtc:
         self.price = get_cg_price()
         self.time = SECONDS_SINCE_DEPLOY
         self.turn = 0
+
+        # redemption
+        self.redemp_coll = 0
 
         self.pool = pool
 

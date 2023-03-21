@@ -206,8 +206,6 @@ def main():
 
     ebtc.take_turn(users, troves)
 
-    pprint(logger)
-
     ## Test for Feed and solvency
     assert trove_1.is_solvent()
 
@@ -246,4 +244,4 @@ def main():
 
     assert not trove_1.is_solvent()
 
-    pprint(logger)
+    logger.to_csv()

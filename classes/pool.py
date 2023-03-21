@@ -18,6 +18,9 @@ class Pool():
       return self.get_price(amount, self.reserve_x, self.reserve_y)
     else:
       return self.get_price(amount, self.reserve_y, self.reserve_x)
+    
+  ## GET X to put in given Y out?
+  ## Get price given X
 
   def recharge(self, percent):
     self.reserve_x += self.reserve_x * percent / 100
@@ -53,7 +56,14 @@ class Pool():
       amountOut = numerator / denominator
 
       return amountOut
+
+  def amount_for_debt(self, amount_out_coll_required):
+    return self.amount_in_give_out(amount_out_coll_required, self.reserve_x, self.reserve_y)
   
+  def amount_in_give_out(self, amount_out, reserve_in, reserve_out):
+    amount_in = reserve_in * amount_out / (reserve_out - amount_out)
+    return amount_in
+
   def swap(self, caller, is_from_debt, amount_in):
     ## Spend
     caller.spend(self, is_from_debt, amount_in, "Swap Spend")

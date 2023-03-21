@@ -6,34 +6,71 @@ from classes.users.user import User
     TODO: Incomplete
 
     (Add liquidation logic to troves as well)
+
+    FlashLiquidator will:
+    - Compute if worth liquidating -> custom by subclass
+    - Flashloan the amount -> Always the same
+    - Liquidate that amount / call the liquidation function -> custom by subclass
+    - Track roi?? -> Always the same
 """
 
 ## Liquidate when profitable ETH -> eBTC -> ETH
 ## Never takes any debt, their liquidations are entirely a function of premium and liquidity
-class PureLiquidator(User):
-    ## TODO: Collateral
+class FlashLiquidator(User):
+
+    def __init__(self, system):
+        User.__init__(self, system, 0)
+        
+        ## 9 basis points or we wouldn't even do th swap
+        self.profitable_treshold = 9 ## TODO: Can add randomness for min profitable BPS
+        
+        self.max_liquidations_per_block = 12 ## TODO: Simulate gas efficiency, as some contracts are cheaper than others
 
     def take_action(self, turn, troves, pool):
         pass
 
         ## Check amount liquidatable
-        [liquidatable_troves, total_debt_liquidatable, total_coll_liquidatable] = get_liquidatable(troves)
+        [liquidatable_troves] = get_liquidatable(troves)
 
-        collateral_value = self.get_value_of_collateral(self.collateral)
+        ## Get next liquidatable trove
 
-        if (liquidatable > 0):
-            if(liquidatable > collateral_value):
-                ## Cap value to what we have
-                liquidatable = collateral_value
+        ## Compute amount you can liquidate profitably via FL
+        has_troves = len(liquidatable_troves) > 0
+        last_profitable = True
+        liquidations_left = self.max_liquidations_per_block
 
-            ## Check if profitable
-            profit = get_liquidation_profitability(total_debt_liquidatable, total_coll_liquidatable)
+        while has_troves and last_profitable and liquidations_left > 0:
+            liquidations_left -= 1
 
-            ## Do the liquidation and arb
+            next_trove
+
+            try:
+                next_trove = liquidatable_troves.pop(0)
+            except:
+                has_troves = False
+
+            ## If we apply the price impact, we can already compare ROI
+            amt_of_coll_required = pool.amount_for_debt(next_trove.debt) ## From x to y, from coll to
+            price_after_purchase = pool.get_price_out(True, amt_of_coll_required)
+            if self.get_roi_full_liquidation(next_trove, price_after_purchase) > 1:
+                ## We perform the liquidation
+                self.do_liquidation(next_trove, amt_of_coll_required)
+            else:
+                ## We do not
+                last_profitable = False
+        
+    def do_liquidation(self, trove, collateral_paid, pool):
+        ## Fake flashloan
+        self.receive("fake flashloan", False, collateral_paid, "Flashloan Received")
+
+        ## Pay to Pool
+        pool.swap_for_debt(collateral_paid)
+
+        ## Liquidate the trove
+        trove.liquidate_full(self)
+
     
 def get_liquidatable(troves):
-    ## TODO: Should this be library?
-    ## TODO: Classes
     found = []
     total_debt = 0
     total_coll = 0
@@ -47,3 +84,12 @@ def get_liquidatable(troves):
     found.sort(trove.get_cr(), True)     
 
     return [found, total_coll, total_debt]
+
+def get_roi_full_liquidation(trove, price_coll_over_debt):
+    ## Coll / Debt = 13 ETH for 1 BTC
+    coll_as_debt = trove.collateral / price_coll_over_debt
+    if coll_as_debt > trove.debt:
+        return coll_as_debt / trove.debt
+    else:
+        ## Negative ROI, never performed
+        return -1

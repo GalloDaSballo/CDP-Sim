@@ -8,7 +8,12 @@ from classes.users.user import User
     (Add Redeem logic to troves as well)
 """
 
-## Buys when cheap and sells when higher
+## Buy Cheap and Redeem if worth more
+## If we know the price (of the Collateral) will go up next turn
+## Buy cheap now
+## Redeem and get more coll
+## Coll will be worth more than debt
+## Coll -> Debt -> Redeem -> Coll
 class RedeemArber(User):
    ## TODO: Add data to track self open stuff
 
@@ -26,6 +31,13 @@ class RedeemArber(User):
             next_price = 1 / self.system.next_price
             price = 1 / self.system.price
             ## We can buy BTC and redeem it
+
+            ## Specifically, we know that current price is cheaper than next
+            ## Meaning we can buy AMT until price goes from current to next
+            ## We effectively arb the pool
+            ## And do a pure arb, which will pay off next block?
+
+            ## TODO: logic
 
             print("Found arb")
             ## TODO: Maximize via the LP function

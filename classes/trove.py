@@ -123,6 +123,13 @@ class Trove:
 
         return 0
 
+    def redeem(self, amount):
+        ## TODO: Function for price given debt
+        ## Given that return linearly
+        ## TODO: 2 -> require system calling
+        ## TODO: 3 -> Add % Fee
+        x = 0
+
     ## SECURITY CHECKS
     def is_trove(self):
         return True

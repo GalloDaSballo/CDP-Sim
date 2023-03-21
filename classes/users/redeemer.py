@@ -1,5 +1,3 @@
-import math
-import random
 from classes.users.user import User
 
 """
@@ -20,17 +18,18 @@ class RedeemArber(User):
         self.arb(turn, troves, pool)
 
     def arb(self, turn, troves, pool):
-        if price < next_price:
-            next_price = 1 / self.system.next_price
-            price = 1 / self.system.price
-            ## We can buy BTC and redeem it
+        next_price = 1 / self.system.next_price
+        price = 1 / self.system.price
 
+        # We can buy BTC and redeem it
+        if price < next_price:
             print("Found arb")
             ## TODO: Maximize via the LP function
             ## Then interact with Pool and perform the swap
-            pool_spot = get_pool_spot(pool)
+            spot_price = pool.get_price_out(True, 1)
+            print("spot_price", spot_price)
 
-            pool_max_before_next_price = get_max_before_price(pool, next_price)
+            pool_max_before_next_price = pool.get_max_before_price(next_price)
 
             if pool_max_before_next_price:
                 print("NO arb???")
@@ -43,12 +42,19 @@ class RedeemArber(User):
 
             ## Then we close for immediate profit
             debt_out = self.swap_for_debt(to_purchase)
-            ## TODO: Accounting here
 
-            ## Via redeem 
-            redeemed_coll = self.redeem(debt_out)
+            # User Update
+            self.collateral -= to_purchase
+            self.debt += debt_out
+
+            # Redeem Troves
+            redeemed_coll = 0
+            for trove in troves:
+                redeemed_coll += trove.redeem(debt_out, self)
 
             ## PURE ARB means we go back to coll
             assert self.debt == 0
-            ## Must be profitable else we made a mistake
+            # Final Collateral is greater than initial
+            assert self.coll > prev_coll
+            # Final Collateral is equal to initial + total collateral redeemed
             assert self.coll == prev_coll + redeemed_coll

@@ -44,12 +44,7 @@ class RedeemArber(User):
             spot_price = pool.get_price_out(True, 1)
             print("spot_price", spot_price)
             
-            coll_amount = self.collateral
             pool_max_before_next_price = pool.get_max_coll_before_next_price(next_price)
-
-            if pool_max_before_next_price < self.collateral:
-                print("Partial Arb")
-                coll_amount = pool_max_before_next_price
 
             prev_coll = self.collateral
 

@@ -73,7 +73,7 @@ class Ebtc:
 
         if price_change < 0:
             # update debt reserve
-            self.pool.increase_price_of_debt(price_change)
+            self.pool.increase_price_of_debt(abs(price_change))
         else:
             # update coll reserve
             self.pool.increase_price_of_coll(price_change)

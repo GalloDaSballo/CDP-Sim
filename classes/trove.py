@@ -99,10 +99,9 @@ class Trove:
         total_debt_burn = self.debt
         total_col_send = self.collateral
 
-        ## Internal
-        ## TODO: Incorrect / Missing piece / Math
-        ## TODO: Can change this to test different types of premiums
+        # Internal
         self.debt -= total_debt_burn
+        self.collateral -= total_col_send
 
         ## System Wide
         self.system.total_debt -= total_debt_burn

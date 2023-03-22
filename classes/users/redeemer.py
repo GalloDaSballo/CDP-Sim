@@ -26,33 +26,43 @@ class RedeemArber(User):
         self.arb(turn, troves, pool)
 
     def arb(self, turn, troves, pool):
-        next_price = 1 / self.system.next_price
-        price = 1 / self.system.price
+        # healh check-ups before redeeming
+        assert len(troves) > 0
 
-            ## Specifically, we know that current price is cheaper than next
-            ## Meaning we can buy AMT until price goes from current to next
-            ## We effectively arb the pool
-            ## And do a pure arb, which will pay off next block?
+        next_price = self.system.next_price
+        price = self.system.price
 
-            ## TODO: logic
+        ## Specifically, we know that current price is cheaper than next
+        ## Meaning we can buy AMT until price goes from current to next
+        ## We effectively arb the pool
+        ## And do a pure arb, which will pay off next block?
+
+        ## TODO: logic
 
         # We can buy BTC and redeem it
         if price < next_price:
-            print("Found arb")
             ## TODO: Maximize via the LP function
             ## Then interact with Pool and perform the swap
             spot_price = pool.get_price_out(True, 1)
-            print("spot_price", spot_price)
-            
-            pool_max_before_next_price = pool.get_max_coll_before_next_price(next_price)
+
+            # Ensure price spot is higher for one unit of collateral, otherwise will
+            # not be profitable when consider swap fees and collateral redemp fee
+            assert spot_price > price
+            print(
+                f"[REDEEMER]Found arb!. System price: {spot_price} and Pool Spot price: {spot_price}"
+            )
 
             prev_coll = self.collateral
 
-            # Cap if too much
-            to_purchase = min(prev_coll, pool_max_before_next_price)
+            max_coll_in = pool.get_max_coll_before_next_price_sqrt(next_price)
 
-            ## Then we close for immediate profit
-            debt_out = self.swap_for_debt(to_purchase)
+            # Cap if too much
+            to_purchase = min(prev_coll, max_coll_in)
+
+            # Swap collateral in the pool for debt
+            debt_out = pool.swap_for_debt(to_purchase)
+
+            print(f"[REDEEMER]Swapped {to_purchase} in coll for {debt_out} in debt")
 
             # User Update
             self.collateral -= to_purchase

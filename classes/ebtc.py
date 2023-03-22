@@ -1,6 +1,3 @@
-from random import random
-from lib.status import get_icr
-
 from lib.helpers import get_cg_price, price_after_shock
 
 ## TODO: Centralize settings and inject them in system
@@ -24,7 +21,8 @@ class Ebtc:
 
         self.total_deposits = 0
         self.total_debt = 0
-        self.next_price = get_cg_price()
+        # next "oracle price" in the sytem
+        self.next_price = price_after_shock(get_cg_price())
         # feed is assumed to be stETH/BTC
         self.price = get_cg_price()
         self.time = SECONDS_SINCE_DEPLOY

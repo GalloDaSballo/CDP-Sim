@@ -64,7 +64,6 @@ class Ebtc:
 
     def set_price(self, value):
         old_price = self.price
-        ## TODO: Consider adding % Change function vs hardcoded setter
         self.price = value
 
         self.logger.add_entry([self.time, "System", "Price Change", value])
@@ -72,15 +71,12 @@ class Ebtc:
         # Update pool pricing via manipulating reserves
         price_change = (value - old_price) / old_price * 100
 
-        current_reserve_coll = self.pool.reserve_x
-        current_reserve_debt = self.pool.reserve_y
-
         if price_change < 0:
             # update debt reserve
-            self.pool.set_price(current_reserve_coll, current_reserve_coll * self.price)
+            self.pool.increase_price_of_debt(price_change)
         else:
             # update coll reserve
-            self.pool.set_price(current_reserve_debt / self.price, current_reserve_debt)
+            self.pool.increase_price_of_coll(price_change)
 
     def get_next_price(self):
         return price_after_shock(self.price)

@@ -33,16 +33,14 @@ class Pool():
 
   
   def increase_price_of_debt(self, percent):
-    assert percent < 200
-    assert percent > 100
+    assert percent < 100
 
     ## Debt is y
     ## To increase it's price, just increase the reserve_x by the percent
     self.reserve_x = self.reserve_x * percent / 100
 
   def increase_price_of_coll(self, percent):
-    assert percent < 200
-    assert percent > 100
+    assert percent < 100
     
     ## Coll is x
     ## To increase it's price, just increase the reserve_y by the percent

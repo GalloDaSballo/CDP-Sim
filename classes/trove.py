@@ -108,9 +108,6 @@ class Trove:
         self.system.total_debt -= total_debt_burn
         self.system.total_deposits -= total_col_send
 
-        # External User
-        caller.receive(False, total_col_send)
-
         ## Spend Debt to repay
         caller.spend(self.id, True, total_debt_burn, "Liquidate")
         ## Receive Collateral for liquidation

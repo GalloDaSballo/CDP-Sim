@@ -34,6 +34,8 @@ class Ebtc:
         self.pool = pool
 
         self.logger = logger
+        # NOTE: recorded in the csv/json to be mindful of the initial value
+        self.logger.add_entry([self.time, "System", "Initial Price", self.price])
 
     def __repr__(self):
         return str(self.__dict__)

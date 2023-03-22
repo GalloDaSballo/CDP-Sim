@@ -1,4 +1,3 @@
-import csv
 import os
 
 import matplotlib.pyplot as plt
@@ -35,8 +34,19 @@ class GenericLogger:
 
     def to_csv(self):
         # Create a file with current time as name
-        filename = f"{self.path}/{pd.Timestamp.now()}.csv"
+        now = pd.Timestamp.now()
 
         df = pd.DataFrame(self.entries, columns=self.headers)
 
-        df.to_csv(filename, index=False)
+        # Divide actors as class clusters for now
+        df_system = df[df["Name"].str.contains("System")]
+        df_users = df[df["Name"].str.contains("User")]
+        df_troves = df[df["Name"].str.contains("Trove")]
+
+        new_directory = f"{self.path}/{now}"
+        if not os.path.exists(new_directory):
+            os.makedirs(new_directory)
+
+        df_system.to_csv(f"{new_directory}/system.csv", index=False)
+        df_users.to_csv(f"{new_directory}/users.csv", index=False)
+        df_troves.to_csv(f"{new_directory}/troves.csv", index=False)

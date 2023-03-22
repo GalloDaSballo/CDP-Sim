@@ -99,17 +99,13 @@ class Trove:
         total_debt_burn = self.debt
         total_col_send = self.collateral
 
-        ## Internal
-        ## TODO: Incorrect / Missing piece / Math
-        ## TODO: Can change this to test different types of premiums
+        # Internal
         self.debt -= total_debt_burn
+        self.collateral -= total_col_send
 
         ## System Wide
         self.system.total_debt -= total_debt_burn
         self.system.total_deposits -= total_col_send
-
-        # External User
-        caller.receive(False, total_col_send)
 
         ## Spend Debt to repay
         caller.spend(self.id, True, total_debt_burn, "Liquidate")

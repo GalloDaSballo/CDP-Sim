@@ -1,3 +1,5 @@
+from math import sqrt
+
 ## POOL For Swap
 
 ## NOTE: For UniV3 we can use Solidly Math
@@ -19,7 +21,7 @@ class Pool():
     else:
       return self.get_price(amount, self.reserve_y, self.reserve_x)
     
-  ## GET X to put in given Y out?
+  ## GET X to put in given Y out?
   ## Get price given X
 
   def recharge(self, percent):
@@ -35,7 +37,7 @@ class Pool():
   def increase_price_of_debt(self, percent):
     assert percent < 100
 
-    ## Debt is y
+    ## Debt is y
     ## To increase it's price, just increase the reserve_x by the percent
     self.reserve_x = self.reserve_x * percent / 100
 
@@ -72,7 +74,7 @@ class Pool():
       ## If is_from_debt we are buying coll
       receive_amount = self.swap_for_coll(amount_in)
     else:
-      ## Else we are spending coll fro debt
+      ## Else we are spending coll fro debt
       receive_amount = self.swap_for_debt(amount_in)
     
     ## Send back to caller
@@ -102,5 +104,11 @@ class Pool():
   def max_in_before_price_limit(self, price_limit, reserve_in, reserve_out):
     return reserve_out * price_limit - reserve_in
 
+  def get_max_coll_before_next_price_sqrt(self, next_price):
+    # proof: https://media.discordapp.net/attachments/1050808646801567764/1050817069953855508/Petro_Math.jpeg?width=844&height=1126
+    return abs(
+        sqrt(next_price * self.reserve_x * self.reserve_y) / next_price
+        - self.reserve_x
+    )
 
 ## TODO: Unit Tests

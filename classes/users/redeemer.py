@@ -74,7 +74,8 @@ class RedeemArber(User):
             # Redeem Troves
             redeemed_coll = 0
             for trove in troves:
-                redeemed_coll += trove.redeem(debt_out, self)
+                debt_to_redeem = min(trove.debt, debt_out)
+                redeemed_coll += trove.redeem(debt_to_redeem, self)
 
             ## PURE ARB means we go back to coll
             assert self.debt == 0

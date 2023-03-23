@@ -123,6 +123,8 @@ class Trove:
         # healh check-ups before filling redemptions
         assert ebtc_amount > 0
         assert self.system.get_tcr() >= self.system.MCR
+        print("ebtc_amount", ebtc_amount)
+        print("self.system.total_debt", self.system.total_debt)
         assert ebtc_amount <= self.system.total_debt
         assert caller.debt >= ebtc_amount
 

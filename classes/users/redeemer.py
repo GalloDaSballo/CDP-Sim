@@ -65,6 +65,10 @@ class RedeemArber(User):
 
                 # Value used to cap how much debt we get, never should be more that the total system
                 total_system_debt = self.system.total_debt
+                # When total system debt is below this magnitude not worthy dealing with dusts
+                if total_system_debt < 1e-10:
+                    return "NOT WORTHY BEING INVOLVED IN REDEMPTIONS"
+
                 debt_receive = pool.get_price(
                     to_purchase, pool.reserve_x, pool.reserve_y
                 )

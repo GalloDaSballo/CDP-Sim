@@ -41,6 +41,8 @@ class Ebtc:
         return str(self.__dict__)
 
     def get_tcr(self):
+        if self.total_debt == 0:
+            return 10000000000
         # https://github.com/liquity/dev/blob/main/packages/contracts/contracts/Dependencies/LiquityBase.sol#L74-L80
         return (self.total_deposits * self.price) / self.total_debt * 100
 

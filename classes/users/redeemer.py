@@ -47,7 +47,9 @@ class RedeemArber(User):
 
             # Ensure price spot is higher for one unit of collateral, otherwise will
             # not be profitable when consider swap fees and collateral redemp fee
-            assert spot_price > price
+            if spot_price > price:
+                return "TODO: No point in arbing"
+            
             print(
                 f"[REDEEMER]Found arb!. System price: {spot_price} and Pool Spot price: {spot_price}"
             )

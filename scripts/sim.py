@@ -43,6 +43,7 @@ from classes.trove import Trove
 from classes.users.borrower import Borrower
 from classes.users.stat_arber import StatArber
 from classes.users.flash_full_liquidator import FlashFullLiquidator
+from classes.users.redeemer import RedeemArber
 
 
 MAX_BPS = 10_000
@@ -181,6 +182,7 @@ def main():
     user_1 = Borrower(ebtc, STETH_COLL_BALANCE)
     user_2 = StatArber(ebtc, STETH_COLL_BALANCE)
     liquidator = FlashFullLiquidator(ebtc)
+    redeemer = RedeemArber(ebtc, STETH_COLL_BALANCE)
 
     # init a trove for this user
     trove_1 = Trove(user_1, ebtc)
@@ -189,7 +191,7 @@ def main():
     assert ebtc.time == 0
 
     ## Turn System
-    users = [liquidator, user_1, user_2]
+    users = [redeemer, liquidator, user_1, user_2]
     troves = [trove_1, trove_2]
 
     ebtc.take_turn(users, troves)

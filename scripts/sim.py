@@ -204,7 +204,7 @@ def main():
     while not has_done_liq:
         ebtc.take_turn(users, troves)
 
-        if(liquidator.profit > 0):
+        if(len(liquidator.liquidated_ids) > 0):
             has_done_liq = True
 
 

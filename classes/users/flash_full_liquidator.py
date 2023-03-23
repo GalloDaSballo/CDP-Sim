@@ -26,7 +26,7 @@ class FlashFullLiquidator(User):
         
         self.max_liquidations_per_block = 12 ## TODO: Simulate gas efficiency, as some contracts are cheaper than others
 
-        self.profit = 0
+        self.liquidated_ids = []
 
     def take_action(self, turn, troves, pool):
         pass
@@ -62,7 +62,7 @@ class FlashFullLiquidator(User):
                 self.do_liquidation(next_trove, amt_of_coll_required, pool)
 
                 ### TODO: Add Profit math
-                self.profit += 1
+                self.liquidated_ids.append(next_trove.id)
             else:
                 ## We do not
                 last_profitable = False

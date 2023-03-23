@@ -22,6 +22,8 @@ class Trove:
         return self.debt * MAX_BPS / self.collateral
 
     def deposit(self, amount):
+        assert amount > 0
+
         ## System Wide
         self.system.total_deposits += amount
 
@@ -38,6 +40,8 @@ class Trove:
         )
 
     def withdraw(self, amount):
+        assert amount > 0
+
         ## System Wide
         self.system.total_deposits -= amount
 
@@ -54,6 +58,8 @@ class Trove:
         )
 
     def borrow(self, amount):
+        assert amount > 0
+
         ## Internal
         self.debt += amount
         assert self.is_solvent()
@@ -70,6 +76,8 @@ class Trove:
         )
 
     def repay(self, amount):
+        assert amount > 0
+
         ## Internal
         self.debt -= amount
         assert self.is_solvent()
@@ -86,12 +94,12 @@ class Trove:
         )
 
     def liquidate_full(self, caller):
-
         ## Only if not owner
         if caller == self.owner:
             return False
 
         assert not self.is_solvent()
+        assert caller.debt >= self.debt
 
         # TODO: do we care about this specifics?
         is_recovery_mode = self.system.is_in_emergency_mode()
@@ -187,9 +195,9 @@ class Trove:
         return self.debt > self.collateral * self.system.get_price()
 
     def get_icr(self):
-        if(self.debt == 0):
+        if self.debt == 0:
             return 100000000000
-        
+
         return (self.collateral * self.system.get_price()) / self.debt * 100
 
     def current_ltv(self):

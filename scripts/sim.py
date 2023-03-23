@@ -169,9 +169,16 @@ def invariant_tests():
     If I take a turn, X seconds pass
     """
 
+## TODO: % of degen vs stable
+## TODO: % of liquidators vs stable
+## TODO: % of Redeemers
+
+LIQUIDATOR_COUNT = 1
+ARBER_COUNT = 1
+NORMAL_COUNT = 1
+DEGEN_COUNT = 0
 
 def main():
-
     # init the ebtc
     logger = GenericLogger("sim", ["Time", "Name", "Action", "Amount"])
     # make initial balances of the pool matching the "oracle" price from the ebtc system
@@ -180,10 +187,12 @@ def main():
 
     ebtc = Ebtc(logger, pool)
 
+    ## TODO: ADD COUNT as ways to populate them (so we can run % sims)
+
     # init a user with a balance of `STETH_COLL_BALANCE`
     user_1 = Borrower(ebtc, STETH_COLL_BALANCE)
     user_2 = StatArber(ebtc, STETH_COLL_BALANCE)
-    user_3 = DegenBorrower(ebtc, STETH_COLL_BALANCE)
+    # user_3 = DegenBorrower(ebtc, STETH_COLL_BALANCE)
 
     liquidator = FlashFullLiquidator(ebtc)
     redeemer = RedeemArber(ebtc, STETH_COLL_BALANCE)
@@ -191,20 +200,21 @@ def main():
     # init a trove for this user
     trove_1 = Trove(user_1, ebtc)
     trove_2 = Trove(user_2, ebtc)
-    trove_3 = Trove(user_3, ebtc)
+    # trove_3 = Trove(user_3, ebtc)
 
     assert ebtc.time == 0
 
     ## Turn System
-    users = [redeemer, liquidator, user_1, user_2, user_3]
-    troves = [trove_1, trove_2, trove_3]
+    users = [redeemer, liquidator, user_1, user_2]
+    troves = [trove_1, trove_2]
 
     has_done_liq = False
 
     while not has_done_liq:
         try:
             ebtc.take_turn(users, troves)
-        except:
+        except Exception as e: 
+            print(e)
             print("Exception let's end")
             break
 

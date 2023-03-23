@@ -46,6 +46,7 @@ class StatArber(Borrower):
         trove = self.find_trove(troves)
 
         if not trove.is_solvent():
+            print(trove.id)
             print("Trove is insolvent, we run away with the money")
             return ## Just skip
 

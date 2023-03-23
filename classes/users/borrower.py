@@ -22,6 +22,7 @@ class Borrower(User):
 
         ## TODO: If insolvent we should do something, perhaps try to redeem as much as possible
         if not trove.is_solvent():
+            print(trove.id)
             print("Trove is insolvent, we run away with the money")
             return ## Just revert
 

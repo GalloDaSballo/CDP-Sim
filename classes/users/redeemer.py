@@ -22,8 +22,9 @@ class RedeemArber(User):
         ## They know the next price before it happens
         ## At price set, the pool self-arbs for now TODO: Simulate the universe lmao
 
-        ## Open new position
-        self.arb(turn, troves, pool)
+        if self.system.total_debt > 0:
+            ## Open new position
+            self.arb(turn, troves, pool)
 
     def arb(self, turn, troves, pool):
         # healh check-ups before redeeming
@@ -49,7 +50,7 @@ class RedeemArber(User):
             # not be profitable when consider swap fees and collateral redemp fee
             if spot_price > price:
                 return "TODO: No point in arbing"
-            
+
             print(
                 f"[REDEEMER]Found arb!. System price: {spot_price} and Pool Spot price: {spot_price}"
             )

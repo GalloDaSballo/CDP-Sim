@@ -202,7 +202,11 @@ def main():
     has_done_liq = False
 
     while not has_done_liq:
-        ebtc.take_turn(users, troves)
+        try:
+            ebtc.take_turn(users, troves)
+        except:
+            print("Exception let's end")
+            break
 
         if len(liquidator.liquidated_ids) > 0:
             has_done_liq = True

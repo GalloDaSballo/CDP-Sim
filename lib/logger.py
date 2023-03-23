@@ -50,3 +50,11 @@ class GenericLogger:
         df_system.to_csv(f"{new_directory}/system.csv", index=False)
         df_users.to_csv(f"{new_directory}/users.csv", index=False)
         df_troves.to_csv(f"{new_directory}/troves.csv", index=False)
+
+        return df_system, df_users, df_troves
+
+    def plot_price_line_graph(self, df):
+        plt.plot(df["Time"], df["Amount"])
+        plt.xlabel("System Time")
+        plt.ylabel("Oracle Price")
+        plt.show()

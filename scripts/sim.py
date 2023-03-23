@@ -41,6 +41,7 @@ from classes.pool import Pool
 from classes.ebtc import Ebtc
 from classes.trove import Trove
 from classes.users.borrower import Borrower
+from classes.users.degen_borrower import DegenBorrower
 from classes.users.stat_arber import StatArber
 from classes.users.flash_full_liquidator import FlashFullLiquidator
 from classes.users.redeemer import RedeemArber
@@ -181,60 +182,30 @@ def main():
     # init a user with a balance of `STETH_COLL_BALANCE`
     user_1 = Borrower(ebtc, STETH_COLL_BALANCE)
     user_2 = StatArber(ebtc, STETH_COLL_BALANCE)
+    user_3 = DegenBorrower(ebtc, STETH_COLL_BALANCE)
+
+
     liquidator = FlashFullLiquidator(ebtc)
     redeemer = RedeemArber(ebtc, STETH_COLL_BALANCE)
 
     # init a trove for this user
     trove_1 = Trove(user_1, ebtc)
     trove_2 = Trove(user_2, ebtc)
+    trove_3 = Trove(user_3, ebtc)
 
     assert ebtc.time == 0
 
     ## Turn System
-    users = [redeemer, liquidator, user_1, user_2]
-    troves = [trove_1, trove_2]
+    users = [liquidator, user_1, user_2, user_3]
+    troves = [trove_1, trove_2, trove_3]
 
-    ebtc.take_turn(users, troves)
-    assert ebtc.time == SECONDS_PER_TURN
+    has_done_liq = False
 
-    ebtc.take_turn(users, troves)
+    while not has_done_liq:
+        ebtc.take_turn(users, troves)
 
-    ## Test for Feed and solvency
-    assert trove_1.is_solvent()
+        if(liquidator.profit > 0):
+            has_done_liq = True
 
-    print("LTV before drop", trove_1.current_ltv())
-    print("LTV before drop", trove_2.current_ltv())
-
-    ## Minimum amount to be insolvent ## On max leverage
-    ebtc.set_price(ebtc.get_price() * (MAX_BPS - MAX_LTV - 1) / MAX_BPS)
-
-    print("LTV after drop", trove_1.current_ltv())
-
-    ## Insane drop in BTC price -> 0.5 stETH/BTC OR insane drop in ETH price ?
-    ebtc.set_price(INSANE_RATIO_DROP)
-
-    ## User will not invest
-    ebtc.take_turn(users, troves)
-
-    print("Debt", trove_1.debt)
-    print("Max Debt", trove_1.max_borrow())
-
-    ## Because one trove let's verify consistency
-    print("ebtc.total_debt", ebtc.total_debt)
-    print("trove_1.debt", trove_1.debt)
-    print("trove_1.collateral", trove_1.collateral)
-    print("trove_2.debt", trove_2.debt)
-    # assert with `approx` minor decimals mismatch
-    assert approx(ebtc.total_debt) == trove_1.debt + trove_2.debt
-
-    print("ebtc.max_borrow()", ebtc.max_borrow())
-    print("trove_1.max_borrow()", trove_1.max_borrow())
-    print("trove_2.max_borrow()", trove_2.max_borrow())
-    assert ebtc.max_borrow() == trove_1.max_borrow() + trove_2.max_borrow()
-
-    # force another drop again to force trove insolvency, since we `take_turn` and modify the system price
-    ebtc.set_price(INSANE_RATIO_DROP)
-
-    assert not trove_1.is_solvent()
 
     logger.to_csv()

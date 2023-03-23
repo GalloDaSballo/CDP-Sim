@@ -26,6 +26,8 @@ class FlashFullLiquidator(User):
         
         self.max_liquidations_per_block = 12 ## TODO: Simulate gas efficiency, as some contracts are cheaper than others
 
+        self.profit = 0
+
     def take_action(self, turn, troves, pool):
         pass
 
@@ -36,30 +38,38 @@ class FlashFullLiquidator(User):
 
         ## Compute amount you can liquidate profitably via FL
         has_troves = len(liquidatable_troves) > 0
+        print("has_troves", has_troves)
         last_profitable = True
         liquidations_left = self.max_liquidations_per_block
 
         while has_troves and last_profitable and liquidations_left > 0:
             liquidations_left -= 1
 
-            next_trove
+            next_trove = None
 
             try:
                 next_trove = liquidatable_troves.pop(0)
             except:
                 has_troves = False
 
+            if next_trove == None:
+                break
+
             ## If we apply the price impact, we can already compare ROI
             amt_of_coll_required = pool.amount_for_debt(next_trove.debt) ## From x to y, from coll to
             price_after_purchase = pool.get_price_out(True, amt_of_coll_required)
-            if self.get_roi_full_liquidation(next_trove, price_after_purchase) > 1:
+            if get_roi_full_liquidation(next_trove, price_after_purchase) > 1:
                 ## We perform the liquidation
-                self.do_liquidation(next_trove, amt_of_coll_required)
+                self.do_liquidation(next_trove, amt_of_coll_required, pool)
+
+                ### TODO: Add Profit math
+                self.profit += 1
             else:
                 ## We do not
                 last_profitable = False
         
     def do_liquidation(self, trove, collateral_paid, pool):
+        print("liquidation call", trove, collateral_paid)
         ## Fake flashloan
         self.receive("fake flashloan", False, collateral_paid, "Flashloan Received")
 
@@ -74,10 +84,16 @@ def get_liquidatable(troves):
     found = []
 
     for trove in troves:
+        print("trove.is_solvent():", trove.is_solvent())
+        print("trove.debt", trove.debt)
+        print("trove.max_borrow()", trove.max_borrow())
+        
         if not trove.is_solvent():
             found.append(trove)
+    
+    print("found", found)
         
-    found.sort(key=trove.get_icr(), reverse=True)     
+    found.sort(key=lambda obj: obj.get_icr(), reverse=True)     
 
     return [found]
 

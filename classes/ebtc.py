@@ -73,6 +73,9 @@ class Ebtc:
         # Update pool pricing via manipulating reserves
         price_change = (value - old_price) / old_price * 100
 
+        print("value", value)
+        print("price_change", price_change)
+
         if price_change < 0:
             # update debt reserve
             self.pool.increase_price_of_debt(abs(price_change))

@@ -91,7 +91,7 @@ class Trove:
         if caller == self.owner:
             return False
 
-        assert self.is_underwater()
+        assert not self.is_solvent()
 
         # TODO: do we care about this specifics?
         is_recovery_mode = self.system.is_in_emergency_mode()
@@ -170,7 +170,9 @@ class Trove:
 
     def max_borrow(self):
         ## TODO: use function that is same as system
-        return self.collateral * self.system.get_price() * MAX_LTV / MAX_BPS
+        max = self.collateral * self.system.get_price() * MAX_LTV / MAX_BPS
+        print("max_borrow", max)
+        return max
 
     def is_solvent(self):
         if self.debt == 0:

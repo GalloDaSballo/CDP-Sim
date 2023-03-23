@@ -72,8 +72,6 @@ class FlashFullLiquidator(User):
     
 def get_liquidatable(troves):
     found = []
-    total_debt = 0
-    total_coll = 0
 
     for trove in troves:
         if not trove.is_solvent():

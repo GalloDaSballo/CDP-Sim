@@ -94,7 +94,6 @@ class Ebtc:
                 return (
                     self.get_price() * (MAX_BPS + (PRICE_VOLATILITY * random())) / MAX_BPS
                 )
-                ## TODO: We may want to log this
             else:
                 ## Decrease
                 return (

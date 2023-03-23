@@ -9,13 +9,13 @@ from classes.users.user import User
 """
 
 ## Buy Cheap and Redeem if worth more
-## If we know the price (of the Collateral) will go up next turn
+## If we know the price (of the Collateral) will go up next turn
 ## Buy cheap now
 ## Redeem and get more coll
 ## Coll will be worth more than debt
 ## Coll -> Debt -> Redeem -> Coll
 
-## TODO: Prob, just like liquidator, you'd loop forever until not profitable
+## TODO: Prob, just like liquidator, you'd loop forever until not profitable
 ## But you can cap to simulate gas limits
 class RedeemArber(User):
     ## TODO: Add data to track self open stuff
@@ -35,10 +35,10 @@ class RedeemArber(User):
         next_price = self.system.next_price
         price = self.system.price
 
-        ## Specifically, we know that current price is cheaper than next
-        ## Meaning we can buy AMT until price goes from current to next
+        ## Specifically, we know that current price is cheaper than next
+        ## Meaning we can buy AMT until price goes from current to next
         ## We effectively arb the pool
-        ## And do a pure arb, which will pay off next block?
+        ## And do a pure arb, which will pay off next block?
 
         ## TODO: logic
 
@@ -93,7 +93,7 @@ class RedeemArber(User):
                         continue
 
                 # After arb we should end-up with zero debt
-                assert self.debt == 0
+                assert approx(self.debt) == 0
 
                 # Final Collateral is greater than initial
                 assert self.collateral >= prev_coll

@@ -99,7 +99,7 @@ class Pool():
     return amount_out
   
   def get_max_coll_before_next_price(self, next_price):
-    self.max_in_before_price_limit(next_price, self.reserve_x, self.reserve_y)
+    return self.max_in_before_price_limit(next_price, self.reserve_x, self.reserve_y)
   
   def max_in_before_price_limit(self, price_limit, reserve_in, reserve_out):
     return reserve_out * price_limit - reserve_in

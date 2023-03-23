@@ -38,7 +38,6 @@ class FlashFullLiquidator(User):
 
         ## Compute amount you can liquidate profitably via FL
         has_troves = len(liquidatable_troves) > 0
-        print("has_troves", has_troves)
         last_profitable = True
         liquidations_left = self.max_liquidations_per_block
 
@@ -69,7 +68,6 @@ class FlashFullLiquidator(User):
                 last_profitable = False
         
     def do_liquidation(self, trove, collateral_paid, pool):
-        print("liquidation call", trove, collateral_paid)
         ## Fake flashloan
         self.receive("fake flashloan", False, collateral_paid, "Flashloan Received")
 
@@ -83,15 +81,10 @@ class FlashFullLiquidator(User):
 def get_liquidatable(troves):
     found = []
 
-    for trove in troves:
-        print("trove.is_solvent():", trove.is_solvent())
-        print("trove.debt", trove.debt)
-        print("trove.max_borrow()", trove.max_borrow())
-        
+    for trove in troves:        
         if not trove.is_solvent():
             found.append(trove)
-    
-    print("found", found)
+
         
     found.sort(key=lambda obj: obj.get_icr(), reverse=True)     
 

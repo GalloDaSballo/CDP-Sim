@@ -89,7 +89,7 @@ class RedeemArber(User):
                 else:
                     continue
 
-            ## PURE ARB means we go back to coll
+            # After arb we should end-up with zero debt
             assert self.debt == 0
 
             # Final Collateral is greater than initial

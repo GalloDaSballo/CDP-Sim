@@ -196,7 +196,7 @@ def main():
     assert ebtc.time == 0
 
     ## Turn System
-    users = [liquidator, user_1, user_2, user_3]
+    users = [redeemer, liquidator, user_1, user_2, user_3]
     troves = [trove_1, trove_2, trove_3]
 
     has_done_liq = False

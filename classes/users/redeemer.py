@@ -74,12 +74,15 @@ class RedeemArber(User):
             # Redeem Troves
             redeemed_coll = 0
             for trove in troves:
-                debt_to_redeem = min(trove.debt, debt_out)
-                redeemed_coll += trove.redeem(debt_to_redeem, self)
+                debt_to_redeem = min(trove.debt, self.debt)
+                if(debt_to_redeem > 0):
+                    redeemed_coll += trove.redeem(debt_to_redeem, self)
+                else:
+                    break
 
             ## PURE ARB means we go back to coll
             assert self.debt == 0
             # Final Collateral is greater than initial
-            assert self.coll > prev_coll
+            assert self.collateral > prev_coll
             # Final Collateral is equal to initial + total collateral redeemed
-            assert self.coll == prev_coll + redeemed_coll
+            assert self.collateral == prev_coll + redeemed_coll

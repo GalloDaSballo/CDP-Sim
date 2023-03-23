@@ -92,6 +92,7 @@ random.seed(SEED)
 
 ## AMM V2
 
+
 def price_given_in(amount_in, reserve_in, reserve_out):
     """
     Returns price given the amount in and the reserves
@@ -184,7 +185,6 @@ def main():
     user_2 = StatArber(ebtc, STETH_COLL_BALANCE)
     user_3 = DegenBorrower(ebtc, STETH_COLL_BALANCE)
 
-
     liquidator = FlashFullLiquidator(ebtc)
     redeemer = RedeemArber(ebtc, STETH_COLL_BALANCE)
 
@@ -204,8 +204,10 @@ def main():
     while not has_done_liq:
         ebtc.take_turn(users, troves)
 
-        if(liquidator.profit > 0):
+        if liquidator.profit > 0:
             has_done_liq = True
 
+    df_system, _, _ = logger.to_csv()
 
-    logger.to_csv()
+    # plot pricing for having some visual insight of the whole system price hist.
+    logger.plot_price_line_graph(df_system)

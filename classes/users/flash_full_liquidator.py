@@ -21,7 +21,7 @@ class FlashFullLiquidator(User):
     def __init__(self, system):
         User.__init__(self, system, 0)
         
-        ## 9 basis points or we wouldn't even do th swap
+        ## 9 basis points or we wouldn't even do th swap
         self.profitable_treshold = 9 ## TODO: Can add randomness for min profitable BPS
         
         self.max_liquidations_per_block = 12 ## TODO: Simulate gas efficiency, as some contracts are cheaper than others
@@ -54,7 +54,7 @@ class FlashFullLiquidator(User):
             if next_trove == None:
                 break
 
-            ## If we apply the price impact, we can already compare ROI
+            ## If we apply the price impact, we can already compare ROI
             amt_of_coll_required = pool.amount_for_debt(next_trove.debt) ## From x to y, from coll to
             price_after_purchase = pool.get_price_out(True, amt_of_coll_required)
             if get_roi_full_liquidation(next_trove, price_after_purchase) > 1:
@@ -74,8 +74,9 @@ class FlashFullLiquidator(User):
         ## Pay to Pool
         pool.swap_for_debt(collateral_paid)
 
-        ## Liquidate the trove
-        trove.liquidate_full(self)
+        ## Liquidate the trove
+        if self.debt > 0:
+            trove.liquidate_full(self)
 
     
 def get_liquidatable(troves):

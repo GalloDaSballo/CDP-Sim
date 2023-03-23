@@ -97,6 +97,8 @@ class Ebtc:
         ## Update Price from previous turn
         self.price = self.next_price
 
+        self.logger.add_entry([self.time, "System", "Price Update", self.price])
+
         ## Find next price for arbitrageurs to front-run
         self.next_price = self.get_next_price()
 

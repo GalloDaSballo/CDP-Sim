@@ -78,12 +78,10 @@ def get_liquidatable(troves):
     for trove in troves:
         if not trove.is_solvent():
             found.append(trove)
-            total_debt += trove.debt
-            total_coll += trove.collateral
         
-    found.sort(trove.get_cr(), True)     
+    found.sort(key=trove.get_icr(), reverse=True)     
 
-    return [found, total_coll, total_debt]
+    return [found]
 
 def get_roi_full_liquidation(trove, price_coll_over_debt):
     ## Coll / Debt = 13 ETH for 1 BTC

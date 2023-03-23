@@ -183,6 +183,9 @@ class Trove:
         return self.debt > self.collateral * self.system.get_price()
 
     def get_icr(self):
+        if(self.debt == 0):
+            return 100000000000
+        
         return (self.collateral * self.system.get_price()) / self.debt * 100
 
     def current_ltv(self):

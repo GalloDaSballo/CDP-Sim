@@ -62,6 +62,15 @@ class RedeemArber(User):
             # Cap if too much
             to_purchase = min(prev_coll, max_coll_in)
 
+            # Value used to cap how much debt we get, never should be more that the total system
+            total_system_debt = self.system.total_debt
+            debt_receive = pool.get_price(to_purchase, pool.reserve_x, pool.reserve_y)
+
+            if debt_receive > total_system_debt:
+                to_purchase = pool.get_price(
+                    total_system_debt, pool.reserve_y, pool.reserve_x
+                )
+
             # Swap collateral in the pool for debt
             debt_out = pool.swap_for_debt(to_purchase)
 
@@ -75,14 +84,14 @@ class RedeemArber(User):
             redeemed_coll = 0
             for trove in troves:
                 debt_to_redeem = min(trove.debt, self.debt)
-                if(debt_to_redeem > 0):
+                if debt_to_redeem > 0:
                     redeemed_coll += trove.redeem(debt_to_redeem, self)
                 else:
-                    break
+                    continue
 
             ## PURE ARB means we go back to coll
-            print("self.debt", self.debt)
-            # assert self.debt == 0
+            assert self.debt == 0
+
             # Final Collateral is greater than initial
             print("self.collateral", self.collateral)
             print("prev_coll", prev_coll)

@@ -180,7 +180,6 @@ class Trove:
     def max_borrow(self):
         ## TODO: use function that is same as system
         max = self.collateral * self.system.get_price() * MAX_LTV / MAX_BPS
-        print("max_borrow", max)
         return max
 
     def is_solvent(self):

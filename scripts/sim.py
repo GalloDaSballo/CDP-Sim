@@ -173,9 +173,9 @@ def invariant_tests():
 ## TODO: % of liquidators vs stable
 ## TODO: % of Redeemers
 
-NORMAL_COUNT = 10
-DEGEN_COUNT = 0
-STAT_ARBER = 0
+NORMAL_COUNT = 100
+DEGEN_COUNT = 1
+STAT_ARBER = 1
 REDEEM_ARBER = 1
 LIQUIDATOR_COUNT = 1
 
@@ -239,12 +239,12 @@ def main():
     has_done_liq = False
 
     while not has_done_liq:
-        # try:
+        try:
             ebtc.take_turn(all_users, troves)
-        # except Exception as e: 
-            # print(e)
-            # print("Exception let's end")
-            # break
+        except Exception as e: 
+            print(e)
+            print("Exception let's end")
+            break
 
     df_system, _, _ = logger.to_csv()
 

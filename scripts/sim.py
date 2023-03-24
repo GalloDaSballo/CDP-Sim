@@ -238,13 +238,13 @@ def main():
 
     has_done_liq = False
 
-    while not has_done_liq:
-        try:
+    while not has_done_liq and ebtc.is_solvent():
+        # try:
             ebtc.take_turn(all_users, troves)
-        except Exception as e: 
-            print(e)
-            print("Exception let's end")
-            break
+        # except Exception as e: 
+            # print(e)
+            # print("Exception let's end")
+            # break
 
     df_system, _, _ = logger.to_csv()
 

@@ -55,6 +55,8 @@ class Ebtc:
         return self.get_tcr() < self.CCR
 
     def is_solvent(self):
+        if self.total_debt == 0:
+            return True
         ## NOTE: Strictly less to avoid rounding, etc..
         ## TODO: Prob refactor
         return self.total_debt < self.max_borrow()

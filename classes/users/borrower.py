@@ -42,6 +42,7 @@ class Borrower(User):
             trove.deposit(self.collateral)
             
             ## Check we did use collateral
+            print("self.collateral", self.collateral)
             assert self.collateral == 0
         
     def borrow_til_target_ltv(self, trove, target_ltv):
@@ -69,7 +70,7 @@ class Borrower(User):
         
     def find_trove(self, troves):
         for trove in troves:
-            if trove.owner.name == self.name:
+            if trove.owner.id == self.id:
                 return trove
 
         return False

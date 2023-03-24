@@ -173,10 +173,14 @@ def invariant_tests():
 ## TODO: % of liquidators vs stable
 ## TODO: % of Redeemers
 
-LIQUIDATOR_COUNT = 1
-ARBER_COUNT = 1
-NORMAL_COUNT = 1
+NORMAL_COUNT = 10
 DEGEN_COUNT = 0
+STAT_ARBER = 0
+REDEEM_ARBER = 1
+LIQUIDATOR_COUNT = 1
+
+
+
 
 def main():
     # init the ebtc
@@ -189,37 +193,58 @@ def main():
 
     ## TODO: ADD COUNT as ways to populate them (so we can run % sims)
 
-    # init a user with a balance of `STETH_COLL_BALANCE`
-    user_1 = Borrower(ebtc, STETH_COLL_BALANCE)
-    user_2 = StatArber(ebtc, STETH_COLL_BALANCE)
-    # user_3 = DegenBorrower(ebtc, STETH_COLL_BALANCE)
+    users = []
+    degens = []
+    stat_arbers = []
+    redeem_arbers = []
+    liquidators = []
 
-    liquidator = FlashFullLiquidator(ebtc)
-    redeemer = RedeemArber(ebtc, STETH_COLL_BALANCE)
+    troves = []
 
-    # init a trove for this user
-    trove_1 = Trove(user_1, ebtc)
-    trove_2 = Trove(user_2, ebtc)
-    # trove_3 = Trove(user_3, ebtc)
+    for x in range(NORMAL_COUNT):
+        user = Borrower(ebtc, STETH_COLL_BALANCE)
+        users.append(user)
+        troves.append(Trove(user, ebtc))
+
+    for x in range(DEGEN_COUNT):
+        degen = DegenBorrower(ebtc, STETH_COLL_BALANCE)
+        degens.append(degen)
+        troves.append(Trove(degen, ebtc))
+        
+
+    for x in range(STAT_ARBER):
+        arber = StatArber(ebtc, STETH_COLL_BALANCE)
+        stat_arbers.append(arber)
+        troves.append(Trove(arber, ebtc))
+
+    for x in range(REDEEM_ARBER):
+        redeem_arbers.append(RedeemArber(ebtc, STETH_COLL_BALANCE))
+
+    for x in range(LIQUIDATOR_COUNT):
+        liquidators.append(FlashFullLiquidator(ebtc))
+
 
     assert ebtc.time == 0
 
     ## Turn System
-    users = [redeemer, liquidator, user_1, user_2]
-    troves = [trove_1, trove_2]
+    all_users = stat_arbers + redeem_arbers + liquidators + degens + users
+
+    ## TODO: Remove
+    ## Quick debug for unique id
+    # for user in all_users:
+    #     print(user.name)
+    #     print(user.id)
+    # return
 
     has_done_liq = False
 
     while not has_done_liq:
-        try:
-            ebtc.take_turn(users, troves)
-        except Exception as e: 
-            print(e)
-            print("Exception let's end")
-            break
-
-        if len(liquidator.liquidated_ids) > 0:
-            has_done_liq = True
+        # try:
+            ebtc.take_turn(all_users, troves)
+        # except Exception as e: 
+            # print(e)
+            # print("Exception let's end")
+            # break
 
     df_system, _, _ = logger.to_csv()
 

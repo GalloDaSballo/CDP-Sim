@@ -11,6 +11,10 @@ class User:
         self.debt = 0
         self.name = random.choice(name_list)
         self.speed = math.floor(random.random() * SPEED_RANGE) + 1
+        
+        self.id = str(
+            random.randint(1, 10**24)
+        )  ## Although PRGN odds of clash are unlikely
 
     def __repr__(self):
         return str(self.__dict__)

@@ -32,6 +32,7 @@ class Trove:
         self.collateral += amount
 
         ## Caller
+        print("user spend", amount)
         self.owner.spend(self.id, False, amount, "Deposit")
 
         ## Logging

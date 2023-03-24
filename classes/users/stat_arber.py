@@ -24,6 +24,7 @@ from classes.users.borrower import Borrower
     ## Total Loss
     ## Total Gain
 """
+
 class StatArber(Borrower):
     def __init__(self, system, initial_balance_collateral):
         Borrower.__init__(self, system, initial_balance_collateral)

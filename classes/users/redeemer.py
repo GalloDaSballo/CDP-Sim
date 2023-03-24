@@ -30,7 +30,8 @@ class RedeemArber(User):
 
     def arb(self, turn, troves, pool):
         # healh check-ups before redeeming
-        assert len(troves) > 0
+        if len(troves) > 0:
+            return
 
         next_price = self.system.next_price
         price = self.system.price

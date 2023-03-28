@@ -307,5 +307,37 @@ def main():
     ## Log the salient run
     df_system, _, _ = logger.to_csv()
 
+    ## Print out end of sim status
+    recap(ebtc, users, troves)
+
     # plot pricing for having some visual insight of the whole system price hist.
     logger.plot_price_line_graph(df_system)
+
+    
+
+def recap(system, users, troves):
+    print("")
+    print("")
+    print("")
+    print("### END OF SIM RECAP ###")
+    print("")
+    print("")
+    print("Ending TCR")
+    print(system.get_tcr())
+
+    print("")
+    print("Ending Price")
+    print(system.get_price())
+
+    insolvent_troves = 0
+
+    for trove in troves:
+        if not trove.is_solvent():
+            insolvent_troves += 1
+    
+    print("")
+    print("")
+    print("Insolvent Troves %")
+    print(insolvent_troves / len(troves) * 100)
+    
+    ## TODO: Print out profits for all users or a metric to show their actions

@@ -145,3 +145,4 @@ class Ebtc:
     def next_turn(self):
         self.time += SECONDS_PER_TURN
         self.turn += 1
+

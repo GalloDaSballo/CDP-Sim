@@ -58,3 +58,4 @@ class GenericLogger:
         plt.xlabel("System Time")
         plt.ylabel("Oracle Price")
         plt.show()
+        

@@ -29,12 +29,9 @@
 
   Liquidate
 """
-import math
 import random
-from rich.pretty import pprint
-from pytest import approx
 
-from lib.logger import GenericLogger, GenericEntry
+from lib.logger import GenericLogger
 from lib.helpers import get_cg_price
 
 from classes.pool import Pool
@@ -180,72 +177,134 @@ REDEEM_ARBER = 1
 LIQUIDATOR_COUNT = 1
 
 
+## We need 10% in 3 turns for the flag to be active
+DRAWDOWN_MIN_AMOUNT = 1_000
+DRAWDOWN_MAX_TURNS = 3
+
+## NOTE: Could change into json like but nice to have
+FLAGS = [
+    "drawdown"
+]
+
+## Negative Streak (track older prices)
+## Streak goes down by X% within N turns
+
+def has_flags(history):
+    for flag in FLAGS:
+        if flag == "drawdown":
+            if check_sufficient_drawdown(history):
+                return True
+
+def check_sufficient_drawdown(history):
+    oldest_high = 0
+    current_drawdown = 0
+    turns = 0
+
+    if len(history) < 3:
+        return False
+
+    prev_val = history[0]
+
+    for val in history:
+        turns += 1
+        if val == prev_val:
+            continue
+        
+        if val > prev_val:
+            current_drawdown = 0
+            turns = 0 ## Try again
+            continue
+        
+        if val < prev_val:
+            if oldest_high == 0:
+                oldest_high = prev_val
+            
+            current_drawdown = oldest_high - val
+    
+        if current_drawdown / oldest_high * MAX_BPS > DRAWDOWN_MIN_AMOUNT:
+            print("drawdown found")
+            print("current_drawdown", current_drawdown)
+            print("oldest_high", oldest_high)
+            return True
+        
+        if turns > DRAWDOWN_MAX_TURNS + 1:
+            current_drawdown = 0
+            oldest_high = 0
+    
+    return False
+
 
 
 def main():
-    # init the ebtc
-    logger = GenericLogger("sim", ["Time", "Name", "Action", "Amount"])
-    # make initial balances of the pool matching the "oracle" price from the ebtc system
-    reserve_debt_balance = RESERVE_COLL_INITIAL_BALANCE * get_cg_price()
-    pool = Pool(RESERVE_COLL_INITIAL_BALANCE, reserve_debt_balance, 1000, POOL_FEE)
+    history = []
+    logger = None
 
-    ebtc = Ebtc(logger, pool)
+    while not has_flags(history):
+        history = []
 
-    ## TODO: ADD COUNT as ways to populate them (so we can run % sims)
+        # init the ebtc
+        logger = GenericLogger("sim", ["Time", "Name", "Action", "Amount"])
+        # make initial balances of the pool matching the "oracle" price from the ebtc system
+        reserve_debt_balance = RESERVE_COLL_INITIAL_BALANCE * get_cg_price()
+        pool = Pool(RESERVE_COLL_INITIAL_BALANCE, reserve_debt_balance, 1000, POOL_FEE)
 
-    users = []
-    degens = []
-    stat_arbers = []
-    redeem_arbers = []
-    liquidators = []
+        ebtc = Ebtc(logger, pool)
 
-    troves = []
+        ## TODO: ADD COUNT as ways to populate them (so we can run % sims)
 
-    for x in range(NORMAL_COUNT):
-        user = Borrower(ebtc, STETH_COLL_BALANCE)
-        users.append(user)
-        troves.append(Trove(user, ebtc))
+        users = []
+        degens = []
+        stat_arbers = []
+        redeem_arbers = []
+        liquidators = []
 
-    for x in range(DEGEN_COUNT):
-        degen = DegenBorrower(ebtc, STETH_COLL_BALANCE)
-        degens.append(degen)
-        troves.append(Trove(degen, ebtc))
-        
+        troves = []
 
-    for x in range(STAT_ARBER):
-        arber = StatArber(ebtc, STETH_COLL_BALANCE)
-        stat_arbers.append(arber)
-        troves.append(Trove(arber, ebtc))
+        for x in range(NORMAL_COUNT):
+            user = Borrower(ebtc, STETH_COLL_BALANCE)
+            users.append(user)
+            troves.append(Trove(user, ebtc))
 
-    for x in range(REDEEM_ARBER):
-        redeem_arbers.append(RedeemArber(ebtc, STETH_COLL_BALANCE))
+        for x in range(DEGEN_COUNT):
+            degen = DegenBorrower(ebtc, STETH_COLL_BALANCE)
+            degens.append(degen)
+            troves.append(Trove(degen, ebtc))
+            
 
-    for x in range(LIQUIDATOR_COUNT):
-        liquidators.append(FlashFullLiquidator(ebtc))
+        for x in range(STAT_ARBER):
+            arber = StatArber(ebtc, STETH_COLL_BALANCE)
+            stat_arbers.append(arber)
+            troves.append(Trove(arber, ebtc))
+
+        for x in range(REDEEM_ARBER):
+            redeem_arbers.append(RedeemArber(ebtc, STETH_COLL_BALANCE))
+
+        for x in range(LIQUIDATOR_COUNT):
+            liquidators.append(FlashFullLiquidator(ebtc))
 
 
-    assert ebtc.time == 0
+        assert ebtc.time == 0
 
-    ## Turn System
-    all_users = stat_arbers + redeem_arbers + liquidators + degens + users
 
-    ## TODO: Remove
-    ## Quick debug for unique id
-    # for user in all_users:
-    #     print(user.name)
-    #     print(user.id)
-    # return
+        ## Turn System
+        all_users = stat_arbers + redeem_arbers + liquidators + degens + users
 
-    has_done_liq = False
+        has_done_liq = False
 
-    while not has_done_liq and ebtc.is_solvent():
-        # try:
-            ebtc.take_turn(all_users, troves)
-        # except Exception as e: 
-            # print(e)
-            # print("Exception let's end")
-            # break
+        while not has_done_liq and ebtc.is_solvent():
+            try:
+                ebtc.take_turn(all_users, troves)
+                
+                ## Flag System
+                ## Add price so we can check in next iteration
+                history.append(ebtc.get_price())
 
+            except Exception as e: 
+                print(e)
+                print("Exception let's end")
+                break
+
+    ## Log the salient run
     df_system, _, _ = logger.to_csv()
 
     # plot pricing for having some visual insight of the whole system price hist.

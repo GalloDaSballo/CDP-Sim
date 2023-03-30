@@ -18,6 +18,11 @@ from classes.users.user import User
 ## TODO: Prob, just like liquidator, you'd loop forever until not profitable
 ## But you can cap to simulate gas limits
 class RedeemArber(User):
+    def __init__(self, system, initial_balance_collateral):
+        User.__init__(self, system, initial_balance_collateral)
+        
+        self.name += "-redeemer"
+        
     ## TODO: Add data to track self open stuff
 
     def take_action(self, turn, troves, pool):
@@ -106,3 +111,6 @@ class RedeemArber(User):
                 assert (
                     approx(self.collateral) == prev_coll + redeemed_coll - to_purchase
                 )
+
+                # Upon successful redemp increase global tracker
+                self.system.redemp_tracking += 1

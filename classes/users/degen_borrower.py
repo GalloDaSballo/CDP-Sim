@@ -13,4 +13,6 @@ class DegenBorrower(Borrower):
     def __init__(self, system, initial_balance_collateral):
         Borrower.__init__(self, system, initial_balance_collateral)
 
+        self.name += "-degen"
+
         self.target_ltv = MIN_LTV_DEGEN + random.random() * REMAINING_LTV_RANGE

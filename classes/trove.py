@@ -81,11 +81,11 @@ class Trove:
 
         ## Internal
         self.debt -= amount
-        assert self.is_solvent()
+        assert self.is_solvent(), f"Trove {self.id} is not solvent"
 
         ## System Wide
         self.system.total_debt -= amount
-        assert self.system.is_solvent()
+        assert self.system.is_solvent(), f"System is not solvent. Found while repaying trove {self.id}"
 
         self.owner.spend(self.id, True, amount, "Repay")
 

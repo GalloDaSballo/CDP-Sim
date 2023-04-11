@@ -150,7 +150,7 @@ POOL_FEE = 300
 INSANE_RATIO_DROP = 0.0001
 
 """
-TODO: Track
+    Additiona Tracking, see: recap_extended_avg
     * Additional risk (metric being avg % TVL) -> Liquidatable TVL avg
     * Extra volatility (based on liquidations) -> Average Delta from Price + Standard Deviation of it (Can we do StDev of differences?)
     * AVG bad debt

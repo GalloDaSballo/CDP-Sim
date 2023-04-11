@@ -11,6 +11,8 @@ MAX_BPS = 10_000
 class Borrower(User):
     def __init__(self, system, initial_balance_collateral):
         User.__init__(self, system, initial_balance_collateral)
+        
+        self.name += "-borrower"
 
         self.speed = math.floor(random.random() * SPEED_RANGE) + 1
 
@@ -60,7 +62,6 @@ class Borrower(User):
         ## If above target, delever
         if(trove.debt > target_borrow):
             delta = trove.debt - target_borrow
-
             ## Check we can afford to repay
             if delta < self.debt:
                 trove.repay(delta)

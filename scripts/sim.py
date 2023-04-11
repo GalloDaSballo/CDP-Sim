@@ -277,7 +277,7 @@ def main():
             troves.append(Trove(arber, ebtc))
 
         for x in range(REDEEM_ARBER):
-            redeem_arbers.append(RedeemArber(ebtc, STETH_COLL_BALANCE))
+            redeem_arbers.append(RedeemArber(ebtc, STETH_COLL_BALANCE * (NORMAL_COUNT // 2)))
 
         for x in range(LIQUIDATOR_COUNT):
             liquidators.append(FlashFullLiquidator(ebtc))
@@ -328,6 +328,10 @@ def recap(system, users, troves):
     print("")
     print("Ending Price")
     print(system.get_price())
+
+    print("")
+    print("No of redemptioms")
+    print(system.redemp_tracking)
 
     insolvent_troves = 0
 

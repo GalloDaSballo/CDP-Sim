@@ -29,6 +29,8 @@ class StatArber(Borrower):
     def __init__(self, system, initial_balance_collateral):
         Borrower.__init__(self, system, initial_balance_collateral)
 
+        self.name += "-statarber"
+        
         ## Track open position
         self.position_sold_debt = 0
         self.position_bought_coll = 0

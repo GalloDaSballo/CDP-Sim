@@ -21,6 +21,8 @@ class FlashFullLiquidator(User):
     def __init__(self, system):
         User.__init__(self, system, 0)
         
+        self.name += "-fl-liquidator"
+
         ## 9 basis points or we wouldn't even do th swap
         self.profitable_treshold = 9 ## TODO: Can add randomness for min profitable BPS
         

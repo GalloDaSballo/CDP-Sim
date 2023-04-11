@@ -32,6 +32,9 @@ class Ebtc:
         # redemption
         self.redemp_coll = 0
 
+        # redemp global tracker hist.
+        self.redemp_tracking = 0
+
         self.pool = pool
 
         self.logger = logger
@@ -140,6 +143,7 @@ class Ebtc:
     def take_actions(self, users, troves):
         ## TODO: Add User Decisions making / given the list of all trove have user do something
         for user in users:
+            print("User name-type", user.name, " proceeds to `take_action`")
             user.take_action(self.turn, troves, self.pool)
 
     def next_turn(self):

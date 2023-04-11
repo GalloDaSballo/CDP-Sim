@@ -166,7 +166,7 @@ class Ebtc:
         found = []
 
         for trove in troves:
-            if not trove.is_underwater():
+            if trove.is_underwater():
                 found.append(trove)
         
         return found
@@ -194,8 +194,10 @@ class Ebtc:
         for trove in troves:
             if trove.debt == 0:
                 continue
-
-            avg_acc = (avg_acc + trove.current_ltv()) / 2
+            if avg_acc == 0:
+                avg_acc = trove.current_ltv()
+            else: 
+                avg_acc = (avg_acc + trove.current_ltv()) / 2
 
 
         return avg_acc

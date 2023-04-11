@@ -166,13 +166,14 @@ TODO: Track
 """
 
 
-NORMAL_COUNT = 10
+NORMAL_COUNT = 100
 DEGEN_COUNT = 1
 STAT_ARBER = 1
 REDEEM_ARBER = 1
 LIQUIDATOR_COUNT = 1
 
-
+## Want to see historical prices?
+PLOT_PRICE = False
 
 ## We need 10% in 3 turns for the flag to be active
 DRAWDOWN_MIN_AMOUNT = 1_000
@@ -292,6 +293,9 @@ def main():
     all_avg_ltv = []
     all_liquidatable_percent = []
     all_prices_deltas = []
+
+    all_prices = []
+
     while not has_done_liq and ebtc.is_solvent():
     
         try:
@@ -306,20 +310,24 @@ def main():
             all_liquidatable_percent.append(ebtc.get_avg_liquidatable_percent(troves))
             all_prices_deltas.append(ebtc.get_price_delta())
 
+            all_prices.append(ebtc.get_price())
+
         except Exception as e: 
             print(e)
             print("Exception let's end")
             break
+
 
     ## Log the salient run
     df_system, _, _ = logger.to_csv()
 
     ## Print out end of sim status
     recap(ebtc, users, troves)
-    recap_extended(all_avg_bad_debt_percent, all_avg_ltv, all_liquidatable_percent, all_prices_deltas)
+    recap_extended_avg(all_avg_bad_debt_percent, all_avg_ltv, all_liquidatable_percent, all_prices_deltas)
 
     # plot pricing for having some visual insight of the whole system price hist.
-    logger.plot_price_line_graph(df_system)
+    if PLOT_PRICE:
+        logger.plot_price_line_graph(df_system)
 
     
 
@@ -361,7 +369,8 @@ def get_avg(list):
     
     return acc / len(list)
 
-def recap_extended(
+
+def recap_extended_avg(
         all_avg_bad_debt_percent, all_avg_ltv, all_liquidatable_percent, all_prices_deltas
 ):
     
@@ -371,12 +380,12 @@ def recap_extended(
 
     print("")
     print("")
-    print("all_avg_ltv", get_avg(all_avg_ltv))
+    print("AVG TCR", 100 / get_avg(all_avg_ltv))
 
     print("")
     print("")
-    print("all_liquidatable_percent", get_avg(all_liquidatable_percent))
+    print("AVG Percent of CDPs that can be liquidated", get_avg(all_liquidatable_percent))
 
     print("")
     print("")
-    print("all_prices_deltas", get_avg(all_prices_deltas))
+    print("AVG Delta between Price and Amount out for 1 unit", get_avg(all_prices_deltas))

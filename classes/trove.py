@@ -85,7 +85,7 @@ class Trove:
 
         ## System Wide
         self.system.total_debt -= amount
-        assert self.system.is_underwater(), f"System is not solvent. Found while repaying trove {self.id}"
+        assert not self.system.is_underwater(), f"System is not solvent. Found while repaying trove {self.id}"
 
         self.owner.spend(self.id, True, amount, "Repay")
 

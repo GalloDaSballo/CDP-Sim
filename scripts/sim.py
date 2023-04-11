@@ -96,6 +96,7 @@ DEGEN_COUNT = 100
 STAT_ARBER = 0 ## TODO: Fix this
 REDEEM_ARBER = 1
 LIQUIDATOR_COUNT = 1
+MAX_TURNS = 10_00
 
 ## Want to see historical prices?
 PLOT_PRICE = False
@@ -221,7 +222,9 @@ def main():
 
     all_prices = []
 
-    while not has_done_liq and ebtc.is_solvent():
+    counter = 0
+    while not has_done_liq and ebtc.is_solvent() and counter < MAX_TURNS:
+        counter += 1
     
         try:
             ebtc.take_turn(all_users, troves)
@@ -241,6 +244,8 @@ def main():
             print(e)
             print("Exception let's end")
             break
+            
+        ## TODO: Checks for being in recovery mode
 
 
     ## Log the salient run
@@ -249,6 +254,7 @@ def main():
     ## Print out end of sim status
     recap(ebtc, users, troves)
     recap_extended_avg(all_avg_bad_debt_percent, all_avg_ltv, all_liquidatable_percent, all_prices_deltas)
+    recap_prices(all_prices)
 
     # plot pricing for having some visual insight of the whole system price hist.
     if PLOT_PRICE:
@@ -284,7 +290,40 @@ def recap(system, users, troves):
     print("")
     print("Insolvent Troves %")
     print(insolvent_troves / len(troves) * 100)
+
+
+def recap_prices(prices):
+    max_price = 0
+    min_price = 9999999999999999999
+
+    index_highest = 0
+    index_lowest = 0
+
+
+    for i in range(len(prices)):
+        price = prices[i]
+        if price > max_price:
+            max_price = price
+            index_highest = i
+        
+        if price < min_price:
+            min_price = price
+
+            index_lowest = i
     
+    print("Sim has lasted", i, "turns")
+    
+    print("")
+    print("")
+    print("Highest Price in Sim", max_price)
+    print("Highest Price found at turn", index_highest)
+
+    print("")
+    print("")
+    print("Lower Price in Sim", min_price)
+    print("Lowest Price found at turn", index_lowest)
+    
+
 
 def get_avg(list):
     acc = 0
@@ -293,6 +332,7 @@ def get_avg(list):
         acc += val
     
     return acc / len(list)
+
 
 
 def recap_extended_avg(

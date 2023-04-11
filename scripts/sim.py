@@ -132,8 +132,6 @@ START_COLL = (
 
 PRICE = 13
 
-PRICE_VOLATILITY = 100  ## 1%
-
 
 ## RISK VALUES ##
 ## Below this you get liquidated
@@ -166,9 +164,10 @@ TODO: Track
 """
 
 
-NORMAL_COUNT = 100
-DEGEN_COUNT = 1
-STAT_ARBER = 1
+## Brute force the sim to find the values
+NORMAL_COUNT = 0
+DEGEN_COUNT = 100
+STAT_ARBER = 0 ## TODO: Fix this
 REDEEM_ARBER = 1
 LIQUIDATOR_COUNT = 1
 

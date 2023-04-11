@@ -311,7 +311,7 @@ def recap_prices(prices):
 
             index_lowest = i
     
-    print("Sim has lasted", i, "turns")
+    print("Sim has lasted", i + 1, "turns")
     
     print("")
     print("")

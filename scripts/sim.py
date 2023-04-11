@@ -45,17 +45,9 @@ from classes.users.redeemer import RedeemArber
 
 
 MAX_BPS = 10_000
-SECONDS_SINCE_DEPLOY = 0
-SECONDS_PER_TURN = 12  ## One block in POS
-INITIAL_FEED = 1000
-SPEED_RANGE = 10
-
-## TODO: CHANGE
-MAX_LTV = 8500
 
 ## Randomness seed for multiple runs
 SEED = 123
-
 random.seed(SEED)
 
 ### ARCHITECURE ###
@@ -72,82 +64,16 @@ random.seed(SEED)
     - Users are the Agents, create a class that extends User (e.g. Borrower)
     
     - Write the logic in take_action and you will be able to extend the rest of the ebtc
-
-
-    TODO:
-    - Basic invariant / unit tests to make sure ebtc is fine
-    - Extend more Classes to Sim
-    - Decide if we want to extend UniV2 / V3 Pool and simulate arbs there as well, 
-    TODO: for now recharge the size based on TVL
 """
-
-
-"""
-    LIBRARIES
-"""
-
-
-## AMM V2
-
-
-def price_given_in(amount_in, reserve_in, reserve_out):
-    """
-    Returns price given the amount in and the reserves
-    """
-    out = amount_out_given_in(amount_in, reserve_in, reserve_out)
-    return amount_in / out
-
-
-def amount_out_given_in(amount_in, reserve_in, reserve_out):
-    """
-    Returns the amount out given the amount in and the reserves
-    """
-    amount_out = reserve_out * amount_in / (reserve_in + amount_in)
-    return amount_out
-
-
-def amount_in_give_out(amount_out, reserve_in, reserve_out):
-    """
-    Returns how much you need to send in order to receive amount out given the reserves
-    """
-    amount_in = reserve_in * amount_out / (reserve_out - amount_out)
-    return amount_in
-
-
-def max_in_before_price_limit(price_limit, reserve_in, reserve_out):
-    """
-    Returns the maximum amount you can buy before reaching the price limit
-    """
-    return reserve_out * price_limit - reserve_in
 
 
 """
     CONSTANTS
 """
 
-## BASIC ##
-START_COLL = (
-    1_000_000e18  ## NOTE: No point in randomizing it as all insights are % of this
-)
-
-PRICE = 13
-
-
-## RISK VALUES ##
-## Below this you get liquidated
-MCR = 110
-
-## If TCR < CCR we enter recovery mode
-CCR = 150
-
-## In recovery mode, troves below CLR are liquidated
-## NOTE: Set to CCR, tweak it if you want
-CLR = CCR
-
 STETH_COLL_BALANCE = 100
 RESERVE_COLL_INITIAL_BALANCE = 1000
 POOL_FEE = 300
-INSANE_RATIO_DROP = 0.0001
 
 """
     Additiona Tracking, see: recap_extended_avg

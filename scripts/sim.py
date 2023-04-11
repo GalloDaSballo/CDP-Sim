@@ -151,30 +151,27 @@ RESERVE_COLL_INITIAL_BALANCE = 1000
 POOL_FEE = 300
 INSANE_RATIO_DROP = 0.0001
 
+"""
+TODO: Track
+    * Additional risk (metric being avg % TVL) -> Liquidatable TVL avg
+    * Extra volatility (based on liquidations) -> Average Delta from Price + Standard Deviation of it (Can we do StDev of differences?)
+    * AVG bad debt
 
-def invariant_tests():
-    ## TODO: Please fill these in
-    """
-    If I have X troves, then total debt is sum of each trove debt
+    // Average = (Value + old_value) / 2
+    // Value = bad_debt / all_debt * 100
 
-    Total borrowed is sum of each trove
+    // Variance?
+    // ST Dev
 
-    Max_borrow is sum of max borrowed
+"""
 
-    LTV is weighted average of each LTV = Sum LTV / $%
 
-    If I take a turn, X seconds pass
-    """
-
-## TODO: % of degen vs stable
-## TODO: % of liquidators vs stable
-## TODO: % of Redeemers
-
-NORMAL_COUNT = 100
+NORMAL_COUNT = 10
 DEGEN_COUNT = 1
 STAT_ARBER = 1
 REDEEM_ARBER = 1
 LIQUIDATOR_COUNT = 1
+
 
 
 ## We need 10% in 3 turns for the flag to be active
@@ -239,76 +236,87 @@ def main():
     history = []
     logger = None
 
-    while not has_flags(history):
-        history = []
+    
+    history = []
 
-        # init the ebtc
-        logger = GenericLogger("sim", ["Time", "Name", "Action", "Amount"])
-        # make initial balances of the pool matching the "oracle" price from the ebtc system
-        reserve_debt_balance = RESERVE_COLL_INITIAL_BALANCE * get_cg_price()
-        pool = Pool(RESERVE_COLL_INITIAL_BALANCE, reserve_debt_balance, 1000, POOL_FEE)
+    # init the ebtc
+    logger = GenericLogger("sim", ["Time", "Name", "Action", "Amount"])
+    # make initial balances of the pool matching the "oracle" price from the ebtc system
+    reserve_debt_balance = RESERVE_COLL_INITIAL_BALANCE * get_cg_price()
+    pool = Pool(RESERVE_COLL_INITIAL_BALANCE, reserve_debt_balance, 1000, POOL_FEE)
 
-        ebtc = Ebtc(logger, pool)
+    ebtc = Ebtc(logger, pool)
 
-        ## TODO: ADD COUNT as ways to populate them (so we can run % sims)
+    ## TODO: ADD COUNT as ways to populate them (so we can run % sims)
 
-        users = []
-        degens = []
-        stat_arbers = []
-        redeem_arbers = []
-        liquidators = []
+    users = []
+    degens = []
+    stat_arbers = []
+    redeem_arbers = []
+    liquidators = []
 
-        troves = []
+    troves = []
 
-        for x in range(NORMAL_COUNT):
-            user = Borrower(ebtc, STETH_COLL_BALANCE)
-            users.append(user)
-            troves.append(Trove(user, ebtc))
+    for x in range(NORMAL_COUNT):
+        user = Borrower(ebtc, STETH_COLL_BALANCE)
+        users.append(user)
+        troves.append(Trove(user, ebtc))
 
-        for x in range(DEGEN_COUNT):
-            degen = DegenBorrower(ebtc, STETH_COLL_BALANCE)
-            degens.append(degen)
-            troves.append(Trove(degen, ebtc))
+    for x in range(DEGEN_COUNT):
+        degen = DegenBorrower(ebtc, STETH_COLL_BALANCE)
+        degens.append(degen)
+        troves.append(Trove(degen, ebtc))
+        
+
+    for x in range(STAT_ARBER):
+        arber = StatArber(ebtc, STETH_COLL_BALANCE)
+        stat_arbers.append(arber)
+        troves.append(Trove(arber, ebtc))
+
+    for x in range(REDEEM_ARBER):
+        redeem_arbers.append(RedeemArber(ebtc, STETH_COLL_BALANCE * (NORMAL_COUNT // 2)))
+
+    for x in range(LIQUIDATOR_COUNT):
+        liquidators.append(FlashFullLiquidator(ebtc))
+
+
+    assert ebtc.time == 0
+
+
+    ## Turn System
+    all_users = stat_arbers + redeem_arbers + liquidators + degens + users
+
+    has_done_liq = False
+
+    all_avg_bad_debt_percent = []
+    all_avg_ltv = []
+    all_liquidatable_percent = []
+    all_prices_deltas = []
+    while not has_done_liq and ebtc.is_solvent():
+    
+        try:
+            ebtc.take_turn(all_users, troves)
             
+            ## Flag System
+            ## Add price so we can check in next iteration
+            history.append(ebtc.get_price())
 
-        for x in range(STAT_ARBER):
-            arber = StatArber(ebtc, STETH_COLL_BALANCE)
-            stat_arbers.append(arber)
-            troves.append(Trove(arber, ebtc))
+            all_avg_bad_debt_percent.append(ebtc.get_avg_bad_debt_percent(troves))
+            all_avg_ltv.append(ebtc.get_avg_ltv(troves))
+            all_liquidatable_percent.append(ebtc.get_avg_liquidatable_percent(troves))
+            all_prices_deltas.append(ebtc.get_price_delta())
 
-        for x in range(REDEEM_ARBER):
-            redeem_arbers.append(RedeemArber(ebtc, STETH_COLL_BALANCE * (NORMAL_COUNT // 2)))
-
-        for x in range(LIQUIDATOR_COUNT):
-            liquidators.append(FlashFullLiquidator(ebtc))
-
-
-        assert ebtc.time == 0
-
-
-        ## Turn System
-        all_users = stat_arbers + redeem_arbers + liquidators + degens + users
-
-        has_done_liq = False
-
-        while not has_done_liq and ebtc.is_solvent():
-            try:
-                ebtc.take_turn(all_users, troves)
-                
-                ## Flag System
-                ## Add price so we can check in next iteration
-                history.append(ebtc.get_price())
-
-            except Exception as e: 
-                print(e)
-                print("Exception let's end")
-                break
+        except Exception as e: 
+            print(e)
+            print("Exception let's end")
+            break
 
     ## Log the salient run
     df_system, _, _ = logger.to_csv()
 
     ## Print out end of sim status
     recap(ebtc, users, troves)
+    recap_extended(all_avg_bad_debt_percent, all_avg_ltv, all_liquidatable_percent, all_prices_deltas)
 
     # plot pricing for having some visual insight of the whole system price hist.
     logger.plot_price_line_graph(df_system)
@@ -344,4 +352,31 @@ def recap(system, users, troves):
     print("Insolvent Troves %")
     print(insolvent_troves / len(troves) * 100)
     
-    ## TODO: Print out profits for all users or a metric to show their actions
+
+def get_avg(list):
+    acc = 0
+
+    for val in list:
+        acc += val
+    
+    return acc / len(list)
+
+def recap_extended(
+        all_avg_bad_debt_percent, all_avg_ltv, all_liquidatable_percent, all_prices_deltas
+):
+    
+    print("")
+    print("")
+    print("all_avg_bad_debt_percent", get_avg(all_avg_bad_debt_percent))
+
+    print("")
+    print("")
+    print("all_avg_ltv", get_avg(all_avg_ltv))
+
+    print("")
+    print("")
+    print("all_liquidatable_percent", get_avg(all_liquidatable_percent))
+
+    print("")
+    print("")
+    print("all_prices_deltas", get_avg(all_prices_deltas))

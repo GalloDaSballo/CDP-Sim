@@ -146,7 +146,77 @@ class Ebtc:
             print("User name-type", user.name, " proceeds to `take_action`")
             user.take_action(self.turn, troves, self.pool)
 
+
     def next_turn(self):
         self.time += SECONDS_PER_TURN
         self.turn += 1
+    
 
+    def get_all_liquidatable_troves(self, troves):
+        found = []
+
+        for trove in troves:
+            if not trove.is_solvent():
+                found.append(trove)
+        
+        return found
+
+    
+    def get_all_troves_with_bad_debt(self, troves):
+        found = []
+
+        for trove in troves:
+            if not trove.is_underwater():
+                found.append(trove)
+        
+        return found
+
+
+    def get_avg_bad_debt_percent(self, troves):
+        ## Find all troves with bad debt
+        ## Given them, sum their debt up
+        ## Return the ratio between the debt of the bad_debt vs total_debt
+        if self.total_debt == 0:
+            return 0
+
+        bad_debt_troves = self.get_all_troves_with_bad_debt(troves)
+
+        bad_debt = 0
+        for trove in bad_debt_troves:
+            bad_debt += trove.debt
+        
+
+        return bad_debt / self.total_debt * 100
+
+    def get_avg_ltv(self, troves):
+        avg_acc = 0
+
+        for trove in troves:
+            if trove.debt == 0:
+                continue
+
+            avg_acc = (avg_acc + trove.current_ltv()) / 2
+
+
+        return avg_acc
+
+    def get_avg_liquidatable_percent(self, troves):
+        if self.total_debt == 0:
+            return 0
+
+        liquidatable_troves = self.get_all_liquidatable_troves(troves)
+
+        liquidatable_debt = 0
+        for trove in liquidatable_troves:
+            liquidatable_debt += trove.debt
+        
+
+        return liquidatable_debt / self.total_debt * 100
+    
+
+    def get_price_delta(self):
+
+        price = self.get_price()
+        pool_price = self.pool.get_price_out(False, 1)
+
+        return abs(price - pool_price)

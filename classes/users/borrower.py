@@ -48,7 +48,7 @@ class Borrower(User):
             assert self.collateral == 0
         
     def borrow_til_target_ltv(self, trove, target_ltv):
-        target_borrow = trove.max_borrow() * target_ltv / MAX_BPS
+        target_borrow = self.get_target_borrow(trove, target_ltv)
 
         ## If below target, borrow
         if(trove.debt < target_borrow):
@@ -61,14 +61,20 @@ class Borrower(User):
         
         ## If above target, delever
         if(trove.debt > target_borrow):
-            delta = trove.debt - target_borrow
-            ## Check we can afford to repay
-            if delta < self.debt:
-                trove.repay(delta)
-            else:
-                print("Insolvent, cannot repay the whole debt, wait and pray")
+            self.handle_repayment(trove, target_borrow)
 
-        
+    def handle_repayment(self, trove, target_borrow):
+        delta = trove.debt - target_borrow
+        ## Check we can afford to repay
+        if delta < self.debt:
+            trove.repay(delta)
+        else:
+            print("Insolvent, cannot repay the whole debt, wait and pray")
+
+    def get_target_borrow(self, trove, target_ltv):
+        return trove.max_borrow() * target_ltv / MAX_BPS
+
+
     def find_trove(self, troves):
         for trove in troves:
             if trove.owner.id == self.id:

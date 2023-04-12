@@ -15,7 +15,7 @@ class Pool():
   def k(self):
     return self.x * self.y
   
-  def get_price_out(self, is_x, amount):
+  def get_amount_out(self, is_x, amount):
     if (is_x):
       return self.get_price(amount, self.reserve_x, self.reserve_y)
     else:

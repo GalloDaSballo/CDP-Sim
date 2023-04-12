@@ -7,7 +7,7 @@ INITIAL_FEED = 13
 MAX_LTV = 8_500
 MAX_BPS = 10_000
 SECONDS_PER_TURN = 12  ## One block in POS
-PRICE_VOLATILITY = 1000
+PRICE_VOLATILITY = 2000
 USING_SHOCK = False
 
 class Ebtc:
@@ -219,6 +219,6 @@ class Ebtc:
     def get_price_delta(self):
 
         price = self.get_price()
-        pool_price = self.pool.get_price_out(False, 1)
+        pool_price = self.pool.get_amount_out(False, 1)
 
         return abs(price - pool_price)

@@ -91,12 +91,12 @@ POOL_FEE = 300
 
 
 ## Brute force the sim to find the values
-NORMAL_COUNT = 0
-DEGEN_COUNT = 100
+NORMAL_COUNT = 100
+DEGEN_COUNT = 0
 STAT_ARBER = 0 ## TODO: Fix this
 REDEEM_ARBER = 1
 LIQUIDATOR_COUNT = 1
-MAX_TURNS = 10_00
+MAX_TURNS = 10000
 
 ## Want to see historical prices?
 PLOT_PRICE = False
@@ -255,6 +255,7 @@ def main():
     recap(ebtc, users, troves)
     recap_extended_avg(all_avg_bad_debt_percent, all_avg_ltv, all_liquidatable_percent, all_prices_deltas)
     recap_prices(all_prices)
+    recap_liquidations(liquidators)
 
     # plot pricing for having some visual insight of the whole system price hist.
     if PLOT_PRICE:
@@ -354,3 +355,8 @@ def recap_extended_avg(
     print("")
     print("")
     print("AVG Delta between Price and Amount out for 1 unit", get_avg(all_prices_deltas))
+
+def recap_liquidations(liquidators):
+    for liquidator in liquidators:
+        for id in liquidator.liquidated_ids:
+            print("Liquidated", id)

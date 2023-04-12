@@ -23,6 +23,9 @@ from classes.users.borrower import Borrower
     ## Lifetime PNL
     ## Total Loss
     ## Total Gain
+
+
+    // TODO: Doesn't work
 """
 
 class StatArber(Borrower):
@@ -135,6 +138,11 @@ class StatArber(Borrower):
             ## TODO: Price standardization
             gain = (delta_debt - cached_initial_debt) * price
             self.total_gain += gain
+
+        ## TODO
+        target_borrow = self.get_target_borrow(trove, self.target_ltv)
+        if(trove.debt > target_borrow):
+            self.handle_repayment(trove, target_borrow)
 
     def sell_all_coll(self):
         self.system.pool.swap(self, False, self.position_bought_coll)

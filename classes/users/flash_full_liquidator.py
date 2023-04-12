@@ -31,10 +31,12 @@ class FlashFullLiquidator(User):
         self.liquidated_ids = []
 
     def take_action(self, turn, troves, pool):
-        pass
-
         ## Check amount liquidatable
         [liquidatable_troves] = get_liquidatable(troves)
+        print("")
+        print("")
+        print("")
+        print("")
 
         ## Get next liquidatable trove
 
@@ -44,6 +46,8 @@ class FlashFullLiquidator(User):
         liquidations_left = self.max_liquidations_per_block
 
         while has_troves and last_profitable and liquidations_left > 0:
+            print("has_troves", has_troves)
+            print("liquidations_left", liquidations_left)
             liquidations_left -= 1
 
             next_trove = None
@@ -58,14 +62,20 @@ class FlashFullLiquidator(User):
 
             ## If we apply the price impact, we can already compare ROI
             amt_of_coll_required = pool.amount_for_debt(next_trove.debt) ## From x to y, from coll to
-            price_after_purchase = pool.get_price_out(True, amt_of_coll_required)
-            if get_roi_full_liquidation(next_trove, price_after_purchase) > 1:
+            debt_after_purchase = pool.get_amount_out(True, amt_of_coll_required)
+            coll_in = amt_of_coll_required
+            coll_out = next_trove.collateral
+            roi_liq = get_roi_full_liquidation(coll_in, coll_out)
+            print("system price", self.system.get_price())
+            print("get_roi_full_liquidation coll_as_debt", roi_liq)
+            if roi_liq > 1:
                 ## We perform the liquidation
                 self.do_liquidation(next_trove, amt_of_coll_required, pool)
 
                 ### TODO: Add Profit math
                 self.liquidated_ids.append(next_trove.id)
             else:
+                
                 ## We do not
                 last_profitable = False
         
@@ -93,11 +103,5 @@ def get_liquidatable(troves):
 
     return [found]
 
-def get_roi_full_liquidation(trove, price_coll_over_debt):
-    ## Coll / Debt = 13 ETH for 1 BTC
-    coll_as_debt = trove.collateral / price_coll_over_debt
-    if coll_as_debt > trove.debt:
-        return coll_as_debt / trove.debt
-    else:
-        ## Negative ROI, never performed
-        return -1
+def get_roi_full_liquidation(coll_in, coll_out):
+    return coll_out / coll_in

@@ -52,7 +52,7 @@ class RedeemArber(User):
         if price < next_price:
             ## TODO: Maximize via the LP function
             ## Then interact with Pool and perform the swap
-            spot_price = pool.get_price_out(True, 1)
+            spot_price = pool.get_amount_out(True, 1)
 
             # Ensure price spot is higher for one unit of collateral, otherwise will
             # not be profitable when consider swap fees and collateral redemp fee

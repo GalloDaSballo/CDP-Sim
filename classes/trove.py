@@ -103,6 +103,7 @@ class Trove:
         assert caller.debt >= self.debt
 
         # TODO: do we care about this specifics?
+        ## TODO: Add Recovery mode liquidation
         is_recovery_mode = self.system.is_in_emergency_mode()
 
         total_debt_burn = self.debt

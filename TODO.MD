@@ -17,3 +17,10 @@ PRICE
 BORROWER
 - Liquidated Trove -> If liquidate need to adapt behaviour
 - Adding Funds behaviour -> Consider allowing some orrowers to have some sort of DCA strat and have them behave based on that
+
+-----
+
+TODO for Partial Liqs
+-> Fix Arbitrage Redeemer
+
+-> Allow % Liquidation instead of full (just lower the liquidation payout)

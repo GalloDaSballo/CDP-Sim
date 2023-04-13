@@ -34,8 +34,8 @@ class RedeemArber(User):
             self.arb(turn, troves, pool)
 
     def arb(self, turn, troves, pool):
-        # healh check-ups before redeeming
-        if len(troves) > 0:
+        ## No troves
+        if len(troves) == 0:
             return
 
         next_price = self.system.next_price
@@ -45,8 +45,6 @@ class RedeemArber(User):
         ## Meaning we can buy AMT until price goes from current to next
         ## We effectively arb the pool
         ## And do a pure arb, which will pay off next block?
-
-        ## TODO: logic
 
         # We can buy BTC and redeem it
         if price < next_price:

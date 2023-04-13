@@ -42,6 +42,9 @@ class FlashFullLiquidator(User):
 
         ## Compute amount you can liquidate profitably via FL
         has_troves = len(liquidatable_troves) > 0
+
+        if not has_troves:
+            print("No Troves liquidatable, skip")
         last_profitable = True
         liquidations_left = self.max_liquidations_per_block
 

@@ -92,11 +92,11 @@ POOL_FEE = 300
 
 ## Brute force the sim to find the values
 NORMAL_COUNT = 100
-DEGEN_COUNT = 0
+DEGEN_COUNT = 1000
 STAT_ARBER = 0 ## TODO: Fix this
 REDEEM_ARBER = 1
-LIQUIDATOR_COUNT = 1
-MAX_TURNS = 10000
+LIQUIDATOR_COUNT = 100
+MAX_TURNS = 1000
 
 ## Want to see historical prices?
 PLOT_PRICE = False
@@ -158,8 +158,10 @@ def check_sufficient_drawdown(history):
     return False
 
 
-
 def main():
+    sim(1500)
+
+def sim(vol):
     history = []
     logger = None
 
@@ -172,7 +174,7 @@ def main():
     reserve_debt_balance = RESERVE_COLL_INITIAL_BALANCE * get_cg_price()
     pool = Pool(RESERVE_COLL_INITIAL_BALANCE, reserve_debt_balance, 1000, POOL_FEE)
 
-    ebtc = Ebtc(logger, pool)
+    ebtc = Ebtc(logger, pool, vol)
 
     ## TODO: ADD COUNT as ways to populate them (so we can run % sims)
 
@@ -270,6 +272,10 @@ def recap(system, users, troves):
     print("### END OF SIM RECAP ###")
     print("")
     print("")
+    print("Ending Turn")
+    print(system.turn)
+    print("")
+
     print("Ending TCR")
     print(system.get_tcr())
 

@@ -7,11 +7,11 @@ INITIAL_FEED = 13
 MAX_LTV = 8_500
 MAX_BPS = 10_000
 SECONDS_PER_TURN = 12  ## One block in POS
-PRICE_VOLATILITY = 1000
 USING_SHOCK = False
 
 class Ebtc:
-    def __init__(self, logger, pool):
+    def __init__(self, logger, pool, vol):
+        self.PRICE_VOLATILITY = vol
         self.MAX_LTV = 15000  ## 150%
         self.FEE_PER_SECOND = 0  ## No fee for borrows
         self.ORIGINATION_FEE = 50  ## 50BPS
@@ -97,12 +97,12 @@ class Ebtc:
             if val >= 50:
                 ## Increase
                 return (
-                    self.get_price() * (MAX_BPS + (PRICE_VOLATILITY * random())) / MAX_BPS
+                    self.get_price() * (MAX_BPS + (self.PRICE_VOLATILITY * random())) / MAX_BPS
                 )
             else:
                 ## Decrease
                 return (
-                    self.get_price() * (MAX_BPS - (PRICE_VOLATILITY * random())) / MAX_BPS
+                    self.get_price() * (MAX_BPS - (self.PRICE_VOLATILITY * random())) / MAX_BPS
                 )
         
 

@@ -14,17 +14,19 @@ from classes.users.user import User
     - Track roi?? -> Always the same
 """
 
+MAX_BPS = 10_000
+
 ## Liquidate when profitable ETH -> eBTC -> ETH
 ## Never takes any debt, their liquidations are entirely a function of premium and liquidity
 class FlashFullLiquidator(User):
 
-    def __init__(self, system):
+    def __init__(self, system, profitable_treshold):
         User.__init__(self, system, 0)
         
         self.name += "-fl-liquidator"
 
         ## 9 basis points or we wouldn't even do th swap
-        self.profitable_treshold = 9 ## TODO: Can add randomness for min profitable BPS
+        self.profitable_treshold = profitable_treshold
         
         self.max_liquidations_per_block = 12 ## TODO: Simulate gas efficiency, as some contracts are cheaper than others
 
@@ -71,7 +73,7 @@ class FlashFullLiquidator(User):
             roi_liq = get_roi_full_liquidation(coll_in, coll_out)
             print("system price", self.system.get_price())
             print("get_roi_full_liquidation coll_as_debt", roi_liq)
-            if roi_liq > 1:
+            if roi_liq > (MAX_BPS + self.profitable_treshold) / MAX_BPS:
                 ## We perform the liquidation
                 self.do_liquidation(next_trove, amt_of_coll_required, pool)
 

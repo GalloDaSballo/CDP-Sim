@@ -56,8 +56,10 @@ class Borrower(User):
             ## Borrow until we get to ltv
             delta_borrow = target_borrow - trove.debt
 
-            print("Borrow ", delta_borrow)
-            trove.borrow(delta_borrow)
+            try:
+                trove.borrow(delta_borrow)
+            except:
+                x = 0 ## Do nothing, this can happen if we end up overborrowing after
         
         ## If above target, delever
         if(trove.debt > target_borrow):

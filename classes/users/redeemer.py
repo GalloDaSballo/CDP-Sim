@@ -22,6 +22,7 @@ class RedeemArber(User):
         User.__init__(self, system, initial_balance_collateral)
         
         self.name += "-redeemer"
+        self.premium = 1.013
         
     ## TODO: Add data to track self open stuff
 
@@ -54,7 +55,7 @@ class RedeemArber(User):
 
             # Ensure price spot is higher for one unit of collateral, otherwise will
             # not be profitable when consider swap fees and collateral redemp fee
-            premium = 1.013  # at least should be ~1.3% in the arb gap
+            premium = self.premium  # at least should be ~1.3% in the arb gap
             if spot_price > price * premium:
                 print(
                     f"[REDEEMER]Found arb!. System price: {price} and Pool Spot price: {spot_price}"
@@ -103,8 +104,6 @@ class RedeemArber(User):
                 # After arb we should end-up with zero debt
                 assert approx(self.debt) == 0
 
-                # Final Collateral is greater than initial
-                assert self.collateral >= prev_coll
                 # Final Collateral is equal to initial + total collateral redeemed
                 assert (
                     approx(self.collateral) == prev_coll + redeemed_coll - to_purchase

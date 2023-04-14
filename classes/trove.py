@@ -201,7 +201,8 @@ class Trove:
         return (self.collateral * self.system.get_price()) / self.debt * 100
 
     def current_ltv(self):
-        if self.collateral == 0 or self.system.get_price() == 0:
+        divisor = (self.collateral * self.system.get_price())
+        if divisor == 0:
             return 0
 
-        return self.debt / (self.collateral * self.system.get_price())
+        return self.debt / divisor

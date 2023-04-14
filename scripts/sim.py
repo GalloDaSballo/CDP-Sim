@@ -92,11 +92,11 @@ POOL_FEE = 300
 
 ## Brute force the sim to find the values
 NORMAL_COUNT = 100
-DEGEN_COUNT = 1000
+DEGEN_COUNT = 5
 STAT_ARBER = 0 ## TODO: Fix this
 REDEEM_ARBER = 1
-LIQUIDATOR_COUNT = 100
-MAX_TURNS = 1000
+LIQUIDATOR_COUNT = 5
+MAX_TURNS = 10000
 
 ## Want to see historical prices?
 PLOT_PRICE = False
@@ -206,7 +206,8 @@ def sim(vol):
         redeem_arbers.append(RedeemArber(ebtc, STETH_COLL_BALANCE * (NORMAL_COUNT // 2)))
 
     for x in range(LIQUIDATOR_COUNT):
-        liquidators.append(FlashFullLiquidator(ebtc))
+        ## 9 bps profitability minimum
+        liquidators.append(FlashFullLiquidator(ebtc, 9))
 
 
     assert ebtc.time == 0
@@ -228,24 +229,24 @@ def sim(vol):
     while not has_done_liq and ebtc.is_solvent() and counter < MAX_TURNS:
         counter += 1
     
-        try:
-            ebtc.take_turn(all_users, troves)
-            
-            ## Flag System
-            ## Add price so we can check in next iteration
-            history.append(ebtc.get_price())
+        # try:
+        ebtc.take_turn(all_users, troves)
+        
+        ## Flag System
+        ## Add price so we can check in next iteration
+        history.append(ebtc.get_price())
 
-            all_avg_bad_debt_percent.append(ebtc.get_avg_bad_debt_percent(troves))
-            all_avg_ltv.append(ebtc.get_avg_ltv(troves))
-            all_liquidatable_percent.append(ebtc.get_avg_liquidatable_percent(troves))
-            all_prices_deltas.append(ebtc.get_price_delta())
+        all_avg_bad_debt_percent.append(ebtc.get_avg_bad_debt_percent(troves))
+        all_avg_ltv.append(ebtc.get_avg_ltv(troves))
+        all_liquidatable_percent.append(ebtc.get_avg_liquidatable_percent(troves))
+        all_prices_deltas.append(ebtc.get_price_delta())
 
-            all_prices.append(ebtc.get_price())
+        all_prices.append(ebtc.get_price())
 
-        except Exception as e: 
-            print(e)
-            print("Exception let's end")
-            break
+        # except Exception as e: 
+        #     print(e)
+        #     print("Exception let's end")
+        #     break
             
         ## TODO: Checks for being in recovery mode
 

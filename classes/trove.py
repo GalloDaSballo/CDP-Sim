@@ -81,7 +81,6 @@ class Trove:
 
         ## Internal
         self.debt -= amount
-        assert self.is_solvent(), f"Trove {self.id} is not solvent"
 
         ## System Wide
         self.system.total_debt -= amount
